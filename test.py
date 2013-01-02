@@ -139,6 +139,8 @@ def setup_logging():
         'cafile': None,
     }
 
+    ssl_info = None # Temporarily disabling it to allow for easier testing
+
     handler = LoghogHandler(address=('localhost', 8888), mode=LoghogHandler.STREAM, service_name='proga', secret='qqq1', compression=LoghogHandler.USE_GZIP, ssl_info=ssl_info)
     formatter = logging.Formatter('%(levelname)s - %(message)s')
     handler.setFormatter(formatter)
