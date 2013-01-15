@@ -1,4 +1,5 @@
 
+import os.path
 from ext.croniter import croniter
 from ext.groper import define_opt, options
 try:
@@ -6,7 +7,7 @@ try:
 except ImportError:
     import dbm
 
-define_opt('scheduler', 'db_filename', default='/var/tmp/loghog-schedules')
+define_opt('scheduler', 'db_filename', default='schedules')
 
 class Scheduler(object):
     '''A job scheduler class. This class keeps the state of the recently executed
@@ -30,6 +31,7 @@ class Scheduler(object):
         '''Initializes the scheduler and opens the dbm file.'''
 
         db_filename = db_filename or options.scheduler.db_filename
+        db_filename = os.path.join(options.main.workdir, db_filename)
         self.db = dbm.open(db_filename, 'c', 0o600)
 
     def get_next_execution(self, job_id, schedule, now):

@@ -1,5 +1,5 @@
 
-import os, sys, resource, errno
+import os, sys, resource, errno, pwd
 
 MAXFD = 2048
 
@@ -53,3 +53,13 @@ def write_pid(filename):
     os.write(fd, str(os.getpid()))
     os.close(fd)
 
+def drop_privileges(user):
+    if os.getuid() == 0:
+        pwnam = pwd.getpwnam(user)
+        running_uid, running_gid = (pwnam[2], pwnam[3])
+
+        if running_gid != os.getgid():
+            os.setgid(running_gid)
+
+        if running_uid != os.getuid():
+            os.setuid(running_uid)
