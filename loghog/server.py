@@ -3,16 +3,14 @@ from ext.groper import define_opt, options
 
 from util import str_to_addrs, parse_addrs, format_connection_message
 
-define_opt('server', 'default_port', type=int, default=8888) # XXX
+define_opt('server', 'default_port', type=int, default=5566)
 
-define_opt('server', 'listen_ipv3', default='127.0.0.1')
 define_opt('server', 'listen_ipv4', default='127.0.0.1')
 define_opt('server', 'listen_ipv6', default='[::1]')
-define_opt('server', 'listen_unix', default='loghogd')
 
-define_opt('server', 'keyfile', default=None)
-define_opt('server', 'certfile', default=None)
-define_opt('server', 'cafile', default=None)
+define_opt('server', 'keyfile', default='')
+define_opt('server', 'certfile', default='')
+define_opt('server', 'cafile', default='')
 
 class Server(object):
     STREAM_SOCKET_BACKLOG = 5
@@ -33,14 +31,14 @@ class Server(object):
 
         self.stream_socks = set()
         self.dgram_socks = set()
-        self.unix_sockets = set()
 
         self.client_stream_socks = set()
         self.stream_buffers = {}
+
+        self.client_socket_addrs = {}
         
         ipv4_addrs = parse_addrs(options.server.listen_ipv4, options.server.default_port)
         ipv6_addrs = parse_addrs(options.server.listen_ipv6, options.server.default_port)
-        unix_sockets = map(lambda s: os.path.join(options.main.rundir, s), str_to_addrs(options.server.listen_unix))
 
         for addr in ipv4_addrs:
             self.stream_socks.add(self.connect(addr, socket.AF_INET, socket.SOCK_STREAM))
@@ -50,31 +48,7 @@ class Server(object):
             self.stream_socks.add(self.connect(addr, socket.AF_INET6, socket.SOCK_STREAM))
             self.dgram_socks.add(self.connect(addr, socket.AF_INET6, socket.SOCK_DGRAM))
 
-        for addr in unix_sockets:
-            stream_addr = '{}.{}.sock'.format(addr, 'stream')
-            dgram_addr = '{}.{}.sock'.format(addr, 'dgram')
-            
-            self.unlink_unix_sock(stream_addr)
-            self.unlink_unix_sock(dgram_addr)
-
-            self.unix_sockets.add(stream_addr)
-            self.unix_sockets.add(dgram_addr)
-            
-            self.stream_socks.add(self.connect(stream_addr, socket.AF_UNIX, socket.SOCK_STREAM))
-            self.dgram_socks.add(self.connect(dgram_addr, socket.AF_UNIX, socket.SOCK_DGRAM))
-
         self.all_socks = set(self.stream_socks | self.dgram_socks)
-
-    def unlink_unix_sock(self, filename):
-        '''Removes the UNIX socket file if it exists.'''
-
-        try:
-            os.unlink(filename)
-        except OSError as e:
-            if e.errno == errno.ENOENT: # File does not exist
-                pass
-            else:
-                raise
 
     def connect(self, address, family, proto):
         '''Returns a socket for a given addres, family and protocol.'''
@@ -118,7 +92,7 @@ class Server(object):
                 elif sock in self.stream_socks:
                     # Accept new stream
                     clientsock, addr = sock.accept()
-                    self.connect_client_stream(clientsock)
+                    self.connect_client_stream(clientsock, addr)
 
                 elif sock in self.client_stream_socks:
                     # Read client data
@@ -126,13 +100,13 @@ class Server(object):
                     if data:
                         self.stream_buffers[sock].append(data)
                     
-                    for msg, addr in self.parse_stream_buffer(sock):
-                        self.callback(msg, addr)
+                    for msg in self.parse_stream_buffer(sock):
+                        self.callback(msg, self.client_socket_addrs[sock])
 
                     if not data:
                         self.disconnect_client_stream(sock)
 
-    def connect_client_stream(self, sock):
+    def connect_client_stream(self, sock, addr):
         '''Adds a new socket to the list of stream sockets.'''
 
         if options.server.keyfile:
@@ -148,6 +122,7 @@ class Server(object):
                 ciphers=None
             )
 
+        self.client_socket_addrs[sock] = addr
         self.client_stream_socks.add(sock)
         self.all_socks.add(sock)
         self.stream_buffers[sock] = []
@@ -157,6 +132,7 @@ class Server(object):
 
         self.client_stream_socks.remove(sock)
         self.all_socks.remove(sock)
+        del self.client_socket_addrs[sock]
         del self.stream_buffers[sock]
         sock.close()
 
@@ -171,7 +147,7 @@ class Server(object):
             if len(buf) > self.HEADER_SIZE:
                 payload, buf = self.parse_datagram(buf)
                 if payload:
-                    yield payload, None # XXX: Do not return None
+                    yield payload
                 else:
                     break
             else:
@@ -180,6 +156,16 @@ class Server(object):
         self.stream_buffers[sock] = [] if not buf else [buf]
 
     def parse_datagram(self, buf):
+        '''If the buf bytestring contains a full datagram, extracts and parses it.
+
+        This method returns a 2-tuple of (payload, buf) where the payload is a
+        bytestring payload of the datagram, with the wire-protocol headers stripped,
+        and buf - the modified buffer with the datagram removed.
+
+        If the passed-in buf does not contain a full datagram, (None, None) is returned.'''
+
+        # XXX: should we detect incomplete datagrams preceeding complete datagrams?
+
         size, flags = struct.unpack(self.HEADER_FORMAT, buf[:self.HEADER_SIZE])
         if len(buf) >= self.HEADER_SIZE + size:
             payload, = struct.unpack(self.MSG_FORMAT_PROTO % size, buf[self.HEADER_SIZE:])
@@ -193,16 +179,12 @@ class Server(object):
             return None, None
 
     def close(self):
-        '''Closes all open server sockets and removes UNIX socket files.'''
+        '''Closes all open sockets.'''
+
+        # XXX: this does not allow for re-loading the config file
 
         for sock in self.all_socks:
-            family = sock.family
-            name = sock.getsockname()
-            
             sock.close()
             
-            if family == socket.AF_UNIX:
-                self.unlink_unix_sock(name)
-
         self.closed = True
 
