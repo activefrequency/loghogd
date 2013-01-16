@@ -1,6 +1,6 @@
 
 import unittest, os
-from facilities import FacilityDB, Facility, FacilityError, pretty_mod_id, parse_mod_id
+from facilities import FacilityDB, FacilityError, pretty_mod_id, parse_mod_id
 
 class FacilitiesTest(unittest.TestCase):
  
@@ -81,5 +81,5 @@ class FacilitiesTest(unittest.TestCase):
 
     def test_no_root_config(self):
         filename = os.path.join(os.path.dirname(__file__), 'data', 'facilities-with-no-root.conf')
-        self.assertRaises(FacilityError, self.db.load_config, (filename, ))
+        self.assertRaises(FacilityError, self.db.load_config, filename)
 

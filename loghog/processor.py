@@ -6,38 +6,51 @@ except ImportError:
     import simplejson as json
 
 class LogParseError(Exception):
+    '''Error raised when a message payload cannot be parsed.'''
 
     def __init__(self, desc, data):
         super(Exception, self).__init__(self, desc)
         self.data = data
 
 class Processor(object):
+    '''Class responsible for parsing messages and dispatching them to the Writer.'''
+
     REQUIRED_FIELDS = ['version', 'stamp', 'nsecs', 'app_id', 'module', 'body', ]
-    HASHABLE_FIELDS = ['app_id', 'module', 'stamp', 'body']
+    HASHABLE_FIELDS = ['app_id', 'module', 'stamp', 'nsecs', 'body']
 
     def __init__(self, facility_db, writer):
+        '''Initializes the Processor instance with the given facility_db and writer instances.'''
+
         self.facility_db = facility_db
         self.writer = writer
 
         self.log = logging.getLogger()
 
     def validate_msg(self, msg):
+        '''Validates that the given message has all the required fields.'''
+
         for field in self.REQUIRED_FIELDS:
             if field not in msg:
                 raise LogParseError('Invalid message: "%s" is not in the message' % field, msg)
 
-    def verify_signature(self, facility, msg):
-        if facility.secret:
+    def verify_signature(self, secret, msg):
+        '''Validates message signature agains the shared secret.
+
+        secret must be a string or None.'''
+
+        if secret:
             if 'signature' not in msg:
                 raise LogParseError('Security alert: message signature is required but not present', msg)
 
-            hashable = ''.join(x for x in self.HASHABLE_FIELDS)
-            signature = hmac.new(facility.secret, hashable).hexdigest()
+            hashable = u''.join(unicode(msg[field]) for field in self.HASHABLE_FIELDS).encode('utf-8')
+            signature = hmac.new(secret, hashable).hexdigest()
 
             if signature != msg['signature']:
                 raise LogParseError('Security alert: message signature is invalid', msg)
 
     def parse_message(self, data):
+        '''Parses the message payload into a validated dict() instance.'''
+
         try:
             msg = json.loads(data)
         except ValueError, e:
@@ -48,6 +61,8 @@ class Processor(object):
         return msg
 
     def on_message(self, msg_bytes, addr):
+        '''Callback method called by Server when new messages arrive.'''
+
         try:
             msg = self.parse_message(msg_bytes)
 
@@ -55,7 +70,7 @@ class Processor(object):
             if not facility:
                 return # XXX: should we raise?
             
-            self.verify_signature(facility, msg)
+            self.verify_signature(facility.secret, msg)
 
             self.log.debug(repr(msg))
             self.writer.write(facility.app_id, facility.mod_id, msg)
