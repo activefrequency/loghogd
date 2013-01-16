@@ -1,8 +1,6 @@
 
-import socket, hmac, struct, zlib, ssl
+import socket, hmac, struct, zlib, ssl, random
 import logging, logging.handlers
-
-import time
 
 try:
     import json
@@ -21,10 +19,10 @@ class LoghogHandler(logging.handlers.SocketHandler):
 
     FORMAT_PROTO = '!LL %ds'
 
-    def __init__(self, address, service_name, mode=DGRAM, secret=None, compression=None, hostname=None, ssl_info=None):
+    def __init__(self, app_name, address=('localhost', 5566), mode=STREAM, secret=None, compression=None, hostname=None, ssl_info=None):
         logging.Handler.__init__(self)
 
-        self.service_name = service_name
+        self.app_name = app_name
         self.address = address
         self.mode = mode
         self.secret = secret
@@ -57,9 +55,20 @@ class LoghogHandler(logging.handlers.SocketHandler):
         self.retryMax = 30.0
         self.retryFactor = 2.0
 
+    def _resolve_addr(self, address, mode):
+        '''Resolves the given address and mode into a randomized address record.'''
+
+        socktype = socket.SOCK_DGRAM if mode == self.DGRAM else socket.SOCK_STREAM
+        res = socket.getaddrinfo(address[0], address[1], 0, socktype)
+        random.shuffle(res)
+        return res[0]
+
     def makeSocket(self, timeout=1.0):
-        proto = socket.SOCK_DGRAM if self.mode == self.DGRAM else socket.SOCK_STREAM
-        s = socket.socket(socket.AF_INET, proto)
+        '''Makes a connection to the socket.'''
+
+        af, socktype, proto, cannonname, sa = self._resolve_addr(self.address, self.mode)
+        
+        s = socket.socket(af, socktype, proto)
 
         if hasattr(s, 'settimeout'):
             s.settimeout(timeout)
@@ -79,16 +88,18 @@ class LoghogHandler(logging.handlers.SocketHandler):
                 )
 
             try:
-                s.connect(self.address)
+                s.connect(sa)
             except Exception:
                 pass
 
         return s
 
     def _encode(self, record):
+        '''Encodes a log record into the loghog on-wire protocol.'''
+
         data = {
             'version': self.VERSION,
-            'app_id': self.service_name,
+            'app_id': self.app_name,
             'module': record.name,
             'stamp': int(record.created),
             'nsecs': int(record.msecs * 10**6),
@@ -110,11 +121,13 @@ class LoghogHandler(logging.handlers.SocketHandler):
         return struct.pack(self.FORMAT_PROTO % size, size, self.flags, payload)
 
     def emit(self, record):
-        encoded = self._encode(record)
-        size, headers = struct.unpack('!LL', encoded[:struct.calcsize('!LL')])
+        '''Encodes and sends the messge over the network.'''
+
         self.send(self._encode(record))
 
     def send(self, s):
+        '''Attempts to create a network connection and send the data.'''
+
         if self.sock is None:
             self.createSocket()
 
@@ -128,45 +141,4 @@ class LoghogHandler(logging.handlers.SocketHandler):
                 self.sock.sendall(s)
         except socket.error:
             self.close()
-
-
-def setup_logging():
-    logger = logging.getLogger()
-
-    ssl_info = {
-        'keyfile': 'thestral.local.key',
-        'certfile': 'thestral.local.crt',
-        'cafile': None,
-    }
-
-    ssl_info = None # Temporarily disabling it to allow for easier testing
-
-    handler = LoghogHandler(address=('localhost', 5566), mode=LoghogHandler.STREAM, service_name='proga', secret='qqq1', compression=LoghogHandler.USE_GZIP, ssl_info=ssl_info)
-    formatter = logging.Formatter('%(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.DEBUG)
-
-
-setup_logging()
-
-log = logging.getLogger('web1.qqq')
-
-while True:
-    log.info(u"hello world!")
-    #log.info('\xe8\xaf\xb7\xe6\x94\xb6\xe8\x97\x8f\xe6\x88\x91\xe4\xbb\xac\xe7\x9a\x84\xe7\xbd\x91\xe5\x9d\x80')
-    time.sleep(1)
-
-
-def foo():
-    bar()
-
-def bar():
-    raise Exception('eeeeeeee')
-
-try:
-    #foo()
-    pass
-except Exception as e:
-    log.exception(e)
 
