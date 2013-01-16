@@ -1,29 +1,8 @@
-
-'''
-Registered:
-pingbrigade:root
-pingbrigade:root.web
-pingbrigade:root.cron
-pingbrigade:root.django
-pingbrigade:root.django.requests
-pingbrigade:root.celery.tasks
-
-Examples:
-pingbrigade:root.django.requests.foo
-pingbrigade:root.django.foo
-pingbrigade:root.django2
-pingbrigade:
-pingbrigade:root
-pingbrigade:root.bar
-pingbrigade:root.celery.beat
-
-'''
-
 from ext.croniter import croniter
 from ConfigParser import RawConfigParser
 import os.path
 
-def _parse_mod_id(mod_str):
+def parse_mod_id(mod_str):
     mod_list = mod_str.strip().split('.')
 
     result = []
@@ -34,7 +13,7 @@ def _parse_mod_id(mod_str):
 
     return tuple(result)
 
-def _pretty_mod_id(mod_id):
+def pretty_mod_id(mod_id):
     if len(mod_id) > 1:
         return '.'.join(mod_id[1:])
     else:
@@ -61,7 +40,7 @@ class Facility(object):
 
         self.app_id = app_id
         self.mod_id = mod_id
-        self.mod_str = _pretty_mod_id(mod_id)
+        self.mod_str = pretty_mod_id(mod_id)
 
         if not app_id:
             raise FacilityError('app_id is required in the facility configuration file')
@@ -142,7 +121,7 @@ class FacilityDB(object):
         '''
 
         if isinstance(mod_str, basestring):
-            mod_id = _parse_mod_id(mod_str)
+            mod_id = parse_mod_id(mod_str)
         else:
             mod_id = mod_str
 
@@ -171,7 +150,7 @@ class FacilityDB(object):
 
             settings = {}
             settings['app_id'] = app_id
-            settings['mod_id'] = _parse_mod_id(mod_str)
+            settings['mod_id'] = parse_mod_id(mod_str)
             settings['rotate'] = cp.get(section, 'rotate')
             settings['backup_count'] = cp.getint(section, 'backup_count')
             settings['secret'] = cp.get(section, 'secret') if cp.has_option(section, 'secret') else None
