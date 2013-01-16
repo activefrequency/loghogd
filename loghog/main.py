@@ -140,15 +140,7 @@ def main():
         writer = Writer(facility_db, options.main.logdir)
         processor = Processor(facility_db, writer)
 
-        server = Server(
-            processor.on_message,
-            ipv6_addrs=[('::1', 8888)],
-            ipv4_addrs=[('127.0.0.1', 8888)],
-            unix_sockets=['/var/tmp/loghog.sock',],
-            keyfile='thestral.local.key',
-            certfile='thestral.local.crt',
-            cafile=None
-        )
+        server = Server(processor.on_message)
 
         signal_handler = make_shutdown_handler(server, writer)
 

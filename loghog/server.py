@@ -1,4 +1,18 @@
-import socket, os, select, struct, zlib, errno, ssl
+import socket, os, select, struct, zlib, errno, ssl, logging
+from ext.groper import define_opt, options
+
+from util import str_to_addrs, parse_addrs, format_connection_message
+
+define_opt('server', 'default_port', type=int, default=8888) # XXX
+
+define_opt('server', 'listen_ipv3', default='127.0.0.1')
+define_opt('server', 'listen_ipv4', default='127.0.0.1')
+define_opt('server', 'listen_ipv6', default='[::1]')
+define_opt('server', 'listen_unix', default='loghogd')
+
+define_opt('server', 'keyfile', default=None)
+define_opt('server', 'certfile', default=None)
+define_opt('server', 'cafile', default=None)
 
 class Server(object):
     STREAM_SOCKET_BACKLOG = 5
@@ -11,13 +25,11 @@ class Server(object):
     HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
     MSG_FORMAT_PROTO = '%ds'
 
-    def __init__(self, callback, ipv4_addrs=tuple(), ipv6_addrs=tuple(), unix_sockets=tuple(), keyfile=None, certfile=None, cafile=None):
+    def __init__(self, callback):
+        self.log = logging.getLogger('server') # internal logger
+
         self.callback = callback
         self.closed = False
-
-        self.keyfile = keyfile
-        self.certfile = certfile
-        self.cafile = cafile
 
         self.stream_socks = set()
         self.dgram_socks = set()
@@ -25,6 +37,10 @@ class Server(object):
 
         self.client_stream_socks = set()
         self.stream_buffers = {}
+        
+        ipv4_addrs = parse_addrs(options.server.listen_ipv4, options.server.default_port)
+        ipv6_addrs = parse_addrs(options.server.listen_ipv6, options.server.default_port)
+        unix_sockets = map(lambda s: os.path.join(options.main.rundir, s), str_to_addrs(options.server.listen_unix))
 
         for addr in ipv4_addrs:
             self.stream_socks.add(self.connect(addr, socket.AF_INET, socket.SOCK_STREAM))
@@ -35,8 +51,8 @@ class Server(object):
             self.dgram_socks.add(self.connect(addr, socket.AF_INET6, socket.SOCK_DGRAM))
 
         for addr in unix_sockets:
-            stream_addr = '%s.%s' % (addr, 'stream')
-            dgram_addr = '%s.%s' % (addr, 'dgram')
+            stream_addr = '{}.{}.sock'.format(addr, 'stream')
+            dgram_addr = '{}.{}.sock'.format(addr, 'dgram')
             
             self.unlink_unix_sock(stream_addr)
             self.unlink_unix_sock(dgram_addr)
@@ -63,6 +79,7 @@ class Server(object):
     def connect(self, address, family, proto):
         '''Returns a socket for a given addres, family and protocol.'''
 
+        self.log.info(format_connection_message(address, family, proto))
         sock = socket.socket(family, proto)
 
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -118,13 +135,13 @@ class Server(object):
     def connect_client_stream(self, sock):
         '''Adds a new socket to the list of stream sockets.'''
 
-        if self.keyfile:
+        if options.server.keyfile:
             sock = ssl.wrap_socket(sock,
-                keyfile=self.keyfile,
-                certfile=self.certfile,
+                keyfile=options.server.keyfile,
+                certfile=options.server.certfile,
                 server_side=True,
                 cert_reqs=ssl.CERT_NONE, # XXX should be ssl.CERT_REQUIRED
-                ca_certs=self.cafile,
+                ca_certs=options.server.cafile,
                 ssl_version=ssl.PROTOCOL_TLSv1,
                 do_handshake_on_connect=True,
                 suppress_ragged_eofs=True,
