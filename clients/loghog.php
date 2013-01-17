@@ -12,25 +12,32 @@ class Loghog {
     const DGRAM = 0x01;
     const STREAM = 0x02;
 
+    const HMAC_DIGEST_ALGO = 'md5';
+
+    protected static $HASHABLE_FIELDS = array('app_id', 'module', 'stamp', 'nsecs', 'body');
+
     const USE_GZIP = 0x01;
 
     const _FLAGS_GZIP = 0x01;
 
-    const FORMAT = 'NNa%d';
+    const FORMAT = 'NNa*';
 
 
-    public function __construct($app_name, $address='localhost', $port=5566, $mode=Loghog::STREAM, $secret=null, $compression=false, $hostname=null, $ssl_info=null) {
+    public function __construct($app_name, $options) {
         $this->app_name = $app_name;
-        $this->address = $address;
-        $this->port = $port;
-        $this->mode = $mode;
-        $this->secret = $secret;
-        $this->compression = $compression;
-        $this->hostname = $hostname;
+
+        $this->address = isset($options['address']) ? $options['address'] : 'localhost';
+        $this->port = isset($options['port']) ? $options['port'] : 5566;
+        $this->mode = isset($options['mode']) ? $options['mode'] : self::STREAM;
+        $this->secret = isset($options['secret']) ? $options['secret'] : null;
+        $this->compression = isset($options['compression']) ? $options['compression'] : null;
+        $this->hostname = isset($options['hostname']) ? $options['hostname'] : php_uname('n');
 
         $this->keyfile = null;
         $this->certfile = null;
         $this->cafile = null;
+
+        $this->combined_certfile = 'thestral-combined.crt'; # XXX
         
         $this->flags = 0;
         if ($this->compression) {
@@ -40,20 +47,53 @@ class Loghog {
         $this->sock = null;
     }
 
+    protected function resolve($address) {
+        $records = dns_get_record($this->address);
+        shuffle($records);
+
+        foreach ($records as $record) {
+            if ($record['type'] == 'A' ||  $record['type'] == 'AAAA') {
+                return array(
+                    'ip' => $record['type'] == 'A' ? $record['ip'] : $record['ipv6'],
+                    'af' => $record['type'] == 'A' ? AF_INET : AF_INET6
+                );
+            }
+        }
+
+        return null;
+    }
+
     protected function make_socket($timeout=1.0) {
         if ($this->sock) {
             return;
         }
 
-        $type = $this->mode == self::STREAM ? SOCK_STREAM : SOCK_DGRAM;
-        $proto = $this->mode == self::STREAM ? SOL_TCP : SOL_UDP;
+        if ($this->combined_certfile) {
+            $opts = array(
+                'tls' => array(
+                    'allow_self_signed' => true, # XXX
+                    'verify_peer' => false, # XXX
+                    'cafile' => $this->cafile,
+                    'local_cert' => $this->combined_certfile
+                )
+            );
+            $sc = stream_context_create($opts);
 
-        $sock = socket_create(AF_INET, $type, $proto);
-        if (!$sock) {
-            return;
+            $addr = sprintf('tls://%s:%d', $this->address, $this->port);
+            $sock = @stream_socket_client($addr, $errno, $errstr, 1, STREAM_CLIENT_CONNECT, $sc);
+        }
+        else {
+            if ($this->mode == self::STREAM) {
+                $addr = sprintf('tcp://%s:%d', $this->address, $this->port);
+                $sock = @stream_socket_client($addr);
+            }
+            else {
+                $addr = sprintf('udp://%s', $this->address);
+                $sock = @fsockopen($addr, $this->port);
+            }
         }
 
-        if (!socket_connect($sock, $this->address, $this->port)) {
+        if (!$sock) {
             return;
         }
 
@@ -75,15 +115,23 @@ class Loghog {
             'body' => $msg 
         );
 
+        if ($this->secret) {
+            foreach (self::$HASHABLE_FIELDS as $field) {
+                $hashable[$field] = (string) $data[$field];
+            }
+            $hashable = implode('', $hashable);
+            $data['signature'] = hash_hmac(self::HMAC_DIGEST_ALGO, $hashable, $this->secret);
+        }
+
         $payload = json_encode($data);
 
         if ($this->compression == self::USE_GZIP) {
-            # XXX: implemnet
+            $payload = gzcompress($payload);
         }
 
         $size = strlen($payload);
 
-        return pack(sprintf(self::FORMAT, $size), $size, $this->flags, $payload);
+        return pack(self::FORMAT, $size, $this->flags, $payload);
     }
 
     protected function emit($level, $args) {
@@ -104,17 +152,16 @@ class Loghog {
         }
 
         if ($this->mode == self::STREAM) {
-            $n = socket_write($this->sock, $msg, strlen($msg)); // XXX: need sendall
+            $n = @fwrite($this->sock, $msg);
         }
         else if ($this->mode == self::DGRAM) {
-            $n = socket_sendto($this->sock, $msg, strlen($msg), 0, $this->address, $this->port);
-            if ($n === false) {
-                socket_close($this->sock);
-                $this->sock = null;
-            }
+            $n = @fwrite($this->sock, $msg);
         }
-
-        echo $msg . "\n";
+        
+        if (!$n) {
+            fclose($this->sock);
+            $this->sock = null;
+        }
     }
 
     protected function format($args) {
