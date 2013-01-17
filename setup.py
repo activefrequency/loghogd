@@ -13,6 +13,7 @@ setup(
     url = 'https://github.com/activefrequency/loghog',
     license = 'Apache2',
     py_modules = ['loghog'],
+    scripts = ['bin/loghogd', 'bin/loghog-server-cert', 'bin/loghog-client-cert'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',
