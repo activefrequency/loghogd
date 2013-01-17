@@ -92,7 +92,10 @@ class Server(object):
                 elif sock in self.stream_socks:
                     # Accept new stream
                     clientsock, addr = sock.accept()
-                    self.connect_client_stream(clientsock, addr)
+                    try:
+                        self.connect_client_stream(clientsock, addr)
+                    except (socket.error, ssl.SSLError) as e:
+                        self.log.exception(e)
 
                 elif sock in self.client_stream_socks:
                     # Read client data
@@ -109,32 +112,43 @@ class Server(object):
     def connect_client_stream(self, sock, addr):
         '''Adds a new socket to the list of stream sockets.'''
 
-        if options.server.keyfile:
-            sock = ssl.wrap_socket(sock,
-                keyfile=options.server.keyfile,
-                certfile=options.server.certfile,
-                server_side=True,
-                cert_reqs=ssl.CERT_NONE, # XXX should be ssl.CERT_REQUIRED
-                ca_certs=options.server.cafile,
-                ssl_version=ssl.PROTOCOL_TLSv1,
-                do_handshake_on_connect=True,
-                suppress_ragged_eofs=True,
-                ciphers=None
-            )
+        try:
+            if options.server.keyfile:
+                sock = ssl.wrap_socket(sock,
+                    keyfile=options.server.keyfile,
+                    certfile=options.server.certfile,
+                    ca_certs=options.server.cafile,
+                    server_side=True,
+                    cert_reqs=ssl.CERT_REQUIRED,
+                )
 
-        self.client_socket_addrs[sock] = addr
-        self.client_stream_socks.add(sock)
-        self.all_socks.add(sock)
-        self.stream_buffers[sock] = []
+            self.client_socket_addrs[sock] = addr
+            self.client_stream_socks.add(sock)
+            self.all_socks.add(sock)
+            self.stream_buffers[sock] = []
+        except Exception as e:
+            self.disconnect_client_stream(sock)
+            self.log.exception(e)
 
     def disconnect_client_stream(self, sock):
         '''Removes all references to a client stream.'''
 
-        self.client_stream_socks.remove(sock)
-        self.all_socks.remove(sock)
-        del self.client_socket_addrs[sock]
-        del self.stream_buffers[sock]
-        sock.close()
+        if sock in self.client_stream_socks:
+            self.client_stream_socks.remove(sock)
+
+        if sock in self.all_socks:
+            self.all_socks.remove(sock)
+        
+        if sock in self.client_socket_addrs:
+            del self.client_socket_addrs[sock]
+
+        if sock in self.stream_buffers:
+            del self.stream_buffers[sock]
+
+        try:
+            sock.close()
+        except socket.error:
+            pass
 
     def parse_stream_buffer(self, sock):
         '''Parses all the complete packets from the buffer and returns a generator.'''
