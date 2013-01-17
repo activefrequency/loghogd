@@ -81,19 +81,15 @@ class LoghogHandler(logging.handlers.SocketHandler):
                 s = ssl.wrap_socket(s,
                     keyfile=self.keyfile,
                     certfile=self.certfile,
-                    server_side=False,
-                    cert_reqs=ssl.CERT_NONE, # XXX should be ssl.CERT_REQUIRED
                     ca_certs=self.cafile,
-                    ssl_version=ssl.PROTOCOL_TLSv1,
-                    do_handshake_on_connect=True,
-                    suppress_ragged_eofs=True,
-                    ciphers=None
+                    server_side=False,
+                    cert_reqs=ssl.CERT_REQUIRED
                 )
 
             try:
                 s.connect(sa)
             except Exception:
-                pass
+                pass # XXX: add some way to print these errors locally to debug bad SSL certs
 
         return s
 
