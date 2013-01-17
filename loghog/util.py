@@ -1,7 +1,7 @@
 
 import re, socket
 
-str_to_addrs = lambda s: tuple(map(lambda a: a.strip(), s.strip().split(',')))
+str_to_addrs = lambda s: tuple(filter(lambda x: x, map(lambda a: a.strip(), s.strip().split(','))))
 
 def parse_addrs(addrs_str, default_port):
     addrs = str_to_addrs(addrs_str)
@@ -59,4 +59,13 @@ def format_connection_message(address, family, proto):
     }
 
     return 'Listening on a {} {} socket on {}.'.format(FAM_STRS[family], PROTO_STRS[family, proto], ADDR_FORMATTER[family](address))
+
+def pretty_addr(addr):
+    '''Converts a full address as returned by socket.accept() to a human-readable format.'''
+
+    if len(addr) == 2:
+        return '{}:{}'.format(*addr)
+
+    if len(addr) == 4:
+        return '[{}]:{}'.format(*addr[:2])
 

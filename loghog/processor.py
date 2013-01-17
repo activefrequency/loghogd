@@ -1,5 +1,6 @@
 
-import hmac, logging
+import hmac, hashlib, logging
+from util import pretty_addr
 try:
     import json
 except ImportError:
@@ -17,6 +18,8 @@ class Processor(object):
 
     REQUIRED_FIELDS = ['version', 'stamp', 'nsecs', 'app_id', 'module', 'body', ]
     HASHABLE_FIELDS = ['app_id', 'module', 'stamp', 'nsecs', 'body']
+
+    HMAC_DIGEST_ALGO = hashlib.md5
 
     def __init__(self, facility_db, writer):
         '''Initializes the Processor instance with the given facility_db and writer instances.'''
@@ -43,7 +46,7 @@ class Processor(object):
                 raise LogParseError('Security alert: message signature is required but not present', msg)
 
             hashable = u''.join(unicode(msg[field]) for field in self.HASHABLE_FIELDS).encode('utf-8')
-            signature = hmac.new(secret, hashable).hexdigest()
+            signature = hmac.new(secret, hashable, self.HMAC_DIGEST_ALGO).hexdigest()
 
             if signature != msg['signature']:
                 raise LogParseError('Security alert: message signature is invalid', msg)
@@ -69,10 +72,13 @@ class Processor(object):
             facility = self.facility_db.get_facility(msg['app_id'], msg['module'])
             if not facility:
                 return # XXX: should we raise?
-            
-            self.verify_signature(facility.secret, msg)
 
-            self.log.debug(repr(msg))
+            try:
+                self.verify_signature(facility.secret, msg)
+            except LogParseError as e:
+                self.log.warning('Signature verification error: %s', e)
+
+            self.log.debug('Got message %r from %r', msg, pretty_addr(addr))
             self.writer.write(facility.app_id, facility.mod_id, msg)
         except Exception, e:
             self.log.error('An error occured processing message: %s', msg_bytes)
