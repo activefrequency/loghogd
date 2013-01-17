@@ -1,5 +1,5 @@
 
-import socket, hmac, struct, zlib, ssl, random
+import socket, hmac, hashlib, struct, zlib, ssl, random
 import logging, logging.handlers
 
 try:
@@ -19,6 +19,8 @@ class LoghogHandler(logging.handlers.SocketHandler):
 
     FORMAT_PROTO = '!LL %ds'
 
+    HMAC_DIGEST_ALGO = hashlib.md5
+
     def __init__(self, app_name, address=('localhost', 5566), mode=STREAM, secret=None, compression=None, hostname=None, ssl_info=None):
         logging.Handler.__init__(self)
 
@@ -26,8 +28,9 @@ class LoghogHandler(logging.handlers.SocketHandler):
         self.address = address
         self.mode = mode
         self.secret = secret
-        self.compression = compression
+        self.compression = compression 
         self.hostname = hostname
+        self.compression = None
 
         self.keyfile = None
         self.certfile = None
@@ -110,7 +113,7 @@ class LoghogHandler(logging.handlers.SocketHandler):
         if self.secret:
             hashable_fields = ['app_id', 'module', 'stamp', 'nsecs', 'body']
             hashable = u''.join(unicode(data[field]) for field in hashable_fields).encode('utf-8')
-            data['signature'] = hmac.new(self.secret, hashable).hexdigest()
+            data['signature'] = hmac.new(self.secret, hashable, self.HMAC_DIGEST_ALGO).hexdigest()
 
         payload = json.dumps(data)
 
