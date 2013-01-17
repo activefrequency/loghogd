@@ -11,12 +11,12 @@ def setup_logging():
     logger = logging.getLogger()
 
     ssl_info = {
-        'keyfile': 'thestral.local.key',
-        'certfile': 'thestral.local.crt',
-        'cafile': None,
+        'keyfile': 'certs/thestral.key',
+        'certfile': 'certs/thestral.cert',
+        'cafile': 'certs/loghog-ca.cert',
     }
 
-    ssl_info = None # Temporarily disabling it to allow for easier testing
+    #ssl_info = None # Temporarily disabling it to allow for easier testing
 
     handler = LoghogHandler('proga', address=('localhost', 5566), mode=LoghogHandler.STREAM, secret='qqq1', compression=LoghogHandler.USE_GZIP, ssl_info=ssl_info)
     formatter = logging.Formatter('%(levelname)s - %(message)s')
