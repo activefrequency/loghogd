@@ -26,18 +26,15 @@ ca_cert="$domain-ca.cert"
 
 # Generate a self-signed Certificate Authority
 openssl genrsa -out "$ca_key" 1024
-openssl req -subj "/CN=$domain" -new -x509 -days 365000 -extensions v3_ca -key "$ca_key" -out "$ca_cert"
+openssl req -subj "/CN=ca.$domain" -new -x509 -days 365000 -extensions v3_ca -key "$ca_key" -out "$ca_cert"
 
 # Generate a server key and signed it with the CA
 openssl genrsa -out "$server_key" 1024
-openssl req -subj "/CN=$domain" -new -extensions v3_ca -key "$server_key" -out "$server_req"
-openssl x509 -req -in "$server_req" -days 365000 -CA "$ca_cert" -CAkey "$ca_key" -CAcreateserial -out "$server_cert.tmp"
-
-# Put together the server certificate
-cat "$ca_cert" "$server_cert.tmp" > "$server_cert"
+openssl req -subj "/CN=server.$domain" -new -extensions v3_ca -key "$server_key" -out "$server_req"
+openssl x509 -req -in "$server_req" -days 365000 -CA "$ca_cert" -CAkey "$ca_key" -CAcreateserial -out "$server_cert"
 
 # Clean up
-rm "$server_req" "$server_cert.tmp" "$domain-ca.srl"
+rm "$server_req" "$domain-ca.srl"
 chmod 644 "$server_cert" "$ca_cert"
 
 umask $old_umask
