@@ -1,7 +1,7 @@
-import socket, os, select, struct, zlib, errno, ssl, logging
+import socket, select, struct, zlib, ssl, logging
 from ext.groper import define_opt, options
 
-from util import str_to_addrs, parse_addrs, format_connection_message
+from util import parse_addrs, format_connection_message
 
 define_opt('server', 'default_port', type=int, default=5566)
 
@@ -168,7 +168,7 @@ class Server(object):
 
         size, flags = struct.unpack(self.HEADER_FORMAT, buf[:self.HEADER_SIZE])
         if len(buf) >= self.HEADER_SIZE + size:
-            payload, = struct.unpack(self.MSG_FORMAT_PROTO % size, buf[self.HEADER_SIZE:])
+            payload = struct.unpack(self.MSG_FORMAT_PROTO % size, buf[self.HEADER_SIZE:])[0]
             buf = buf[self.HEADER_SIZE + size:]
 
             if flags & self._FLAGS_GZIP:
