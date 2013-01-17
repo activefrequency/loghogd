@@ -1,0 +1,65 @@
+#!/bin/sh
+
+set -e
+set -u
+
+DEFAULT_CA_ROOT=`readlink -f ./`
+DEFAULT_CA_DOMAIN='loghog'
+
+usage() {
+    echo "Usage: `basename $0` <domain> [ca-path] [ca-name]" >&2
+    echo "" >&2
+    echo "For example:" >&2
+    echo "  $ `basename $0` `hostname --fqdn`" >&2
+    echo "or" >&2
+    echo "  $ `basename $0` `hostname --fqdn` /etc/loghogd/ loghog" >&2
+    echo "" >&2
+}
+
+if [ $# -lt 1 ]; then
+    usage
+    exit 1
+fi
+
+[ "$1" = "-h" ] || [ "$1" = "--help" ] && usage && exit
+
+domain="$1"
+
+[ $# -lt 2 ] && ca_root=$DEFAULT_CA_ROOT || ca_root="$2"
+[ $# -lt 3 ] && ca_name=$DEFAULT_CA_DOMAIN || ca_name="$3"
+
+old_umask=`umask`
+umask 0066
+
+client_key="$domain.key"
+client_req="$domain.req"
+client_cert="$domain.cert"
+
+ca_key="$ca_root/$ca_name-ca.key"
+ca_cert="$ca_root/$ca_name-ca.cert"
+
+if [ ! -e $ca_key ] || [ ! -e $ca_cert ]; then
+    [ ! -e $ca_key ] && echo "Error! File does not exist: $ca_key" >&2
+    [ ! -e $ca_cert ] && echo "Error! File does not exist: $ca_cert" >&2
+    echo "" >&2
+    echo "Please verify that these exist and try again." >&2
+    echo "Alternatively supply a different path for the ca-root an ca-name" >&2
+    echo "" >&2
+    usage
+    exit 1
+fi
+
+# Generate a client key and signed it with the CA
+openssl genrsa -out "$client_key" 1024
+openssl req -subj "/CN=$domain" -new -extensions v3_ca -key "$client_key" -out "$client_req"
+openssl x509 -req -in "$client_req" -CA "$ca_cert" -CAkey "$ca_key" -CAcreateserial -out "$client_cert.tmp"
+
+# Put together the client certificate
+cat "$ca_cert" "$client_cert.tmp" > "$client_cert"
+
+# Clean up
+rm "$client_req" "$client_cert.tmp" "$ca_name-ca.srl"
+chmod 644 "$client_cert"
+
+umask $old_umask
+
