@@ -2,7 +2,8 @@
 
 import sys, os
 
-sys.path = [os.path.join(os.path.dirname(os.path.dirname(__file__)), 'clients')] + sys.path
+curdir = os.path.dirname(__file__)
+sys.path = [os.path.join(os.path.dirname(curdir), 'clients')] + sys.path
 
 import logging, time
 from loghog import LoghogHandler
@@ -11,12 +12,9 @@ def setup_logging():
     logger = logging.getLogger()
 
     ssl_info = {
-        'keyfile': 'certs/thestral.key',
-        'certfile': 'certs/thestral.cert',
-        'cafile': 'certs/loghog-ca.cert',
+        'pemfile': os.path.join(curdir, 'certs', 'test-client.pem'),
+        'cafile': os.path.join(curdir, 'certs', 'loghog-ca.cert'),
     }
-
-    #ssl_info = None # Temporarily disabling it to allow for easier testing
 
     handler = LoghogHandler('proga', address=('localhost', 5566), mode=LoghogHandler.STREAM, secret='qqq1', compression=LoghogHandler.USE_GZIP, ssl_info=ssl_info)
     formatter = logging.Formatter('%(levelname)s - %(message)s')

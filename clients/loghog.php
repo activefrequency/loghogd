@@ -22,23 +22,22 @@ class Loghog {
 
     const FORMAT = 'NNa*';
 
+    const DEFAULT_PORT = 5566;
+
 
     public function __construct($app_name, $options) {
         $this->app_name = $app_name;
 
         $this->address = isset($options['address']) ? $options['address'] : 'localhost';
-        $this->port = isset($options['port']) ? $options['port'] : 5566;
+        $this->port = isset($options['port']) ? $options['port'] : self::DEFAULT_PORT;
         $this->mode = isset($options['mode']) ? $options['mode'] : self::STREAM;
         $this->secret = isset($options['secret']) ? $options['secret'] : null;
         $this->compression = isset($options['compression']) ? $options['compression'] : null;
         $this->hostname = isset($options['hostname']) ? $options['hostname'] : php_uname('n');
 
-        $this->keyfile = null;
-        $this->certfile = null;
-        $this->cafile = null;
+        $this->pemfile = isset($options['pemfile']) ? $options['pemfile'] : null;
+        $this->cafile = isset($options['cafile']) ? $options['cafile'] : null;
 
-        $this->combined_certfile = 'thestral-combined.crt'; # XXX
-        
         $this->flags = 0;
         if ($this->compression) {
             $this->flags |= self::FLAGS_GZIP;
@@ -68,13 +67,13 @@ class Loghog {
             return;
         }
 
-        if ($this->combined_certfile) {
+        if ($this->pemfile) {
             $opts = array(
-                'tls' => array(
-                    'allow_self_signed' => true, # XXX
-                    'verify_peer' => false, # XXX
+                'ssl' => array(
+                    'allow_self_signed' => false,
+                    'verify_peer' => true,
                     'cafile' => $this->cafile,
-                    'local_cert' => $this->combined_certfile
+                    'local_cert' => $this->pemfile
                 )
             );
             $sc = stream_context_create($opts);

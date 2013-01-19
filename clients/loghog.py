@@ -32,13 +32,11 @@ class LoghogHandler(logging.handlers.SocketHandler):
         self.hostname = hostname
         self.compression = None
 
-        self.keyfile = None
-        self.certfile = None
+        self.pemfile = None
         self.cafile = None
 
         if ssl_info:
-            self.keyfile = ssl_info['keyfile']
-            self.certfile = ssl_info['certfile']
+            self.pemfile = ssl_info['pemfile']
             self.cafile = ssl_info['cafile']
 
         if not hostname:
@@ -77,10 +75,10 @@ class LoghogHandler(logging.handlers.SocketHandler):
             s.settimeout(timeout)
 
         if self.mode == self.STREAM:
-            if self.keyfile:
+            if self.pemfile:
                 s = ssl.wrap_socket(s,
-                    keyfile=self.keyfile,
-                    certfile=self.certfile,
+                    keyfile=self.pemfile,
+                    certfile=self.pemfile,
                     ca_certs=self.cafile,
                     server_side=False,
                     cert_reqs=ssl.CERT_REQUIRED

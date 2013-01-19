@@ -3,8 +3,6 @@
 
 *.swp
 
-certs/
-
 loghog.egg-info
 
 loghogd_local.conf
