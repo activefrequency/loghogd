@@ -13,10 +13,10 @@ def setup_logging():
 
     ssl_info = {
         'pemfile': os.path.join(curdir, 'certs', 'test-client.pem'),
-        'cafile': os.path.join(curdir, 'certs', 'loghog-ca.cert'),
+        'cacert': os.path.join(curdir, 'certs', 'loghog-ca.cert'),
     }
 
-    handler = LoghogHandler('proga', address=('localhost', 5566), mode=LoghogHandler.STREAM, secret='qqq1', compression=LoghogHandler.USE_GZIP, ssl_info=ssl_info)
+    handler = LoghogHandler('proga', address=('localhost', 5566), secret='qqq1', compression=True, ssl_info=ssl_info, print_debug=True)
     formatter = logging.Formatter('%(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)

@@ -36,7 +36,7 @@ class Loghog {
         $this->hostname = isset($options['hostname']) ? $options['hostname'] : php_uname('n');
 
         $this->pemfile = isset($options['pemfile']) ? $options['pemfile'] : null;
-        $this->cafile = isset($options['cafile']) ? $options['cafile'] : null;
+        $this->cacert = isset($options['cacert']) ? $options['cacert'] : null;
 
         $this->flags = 0;
         if ($this->compression) {
@@ -72,7 +72,7 @@ class Loghog {
                 'ssl' => array(
                     'allow_self_signed' => false,
                     'verify_peer' => true,
-                    'cafile' => $this->cafile,
+                    'cafile' => $this->cacert,
                     'local_cert' => $this->pemfile
                 )
             );

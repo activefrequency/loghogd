@@ -9,7 +9,7 @@ define_opt('server', 'listen_ipv4', default='127.0.0.1')
 define_opt('server', 'listen_ipv6', default='[::1]')
 
 define_opt('server', 'pemfile', default='')
-define_opt('server', 'cafile', default='')
+define_opt('server', 'cacert', default='')
 
 class Server(object):
     STREAM_SOCKET_BACKLOG = 5
@@ -116,7 +116,7 @@ class Server(object):
                 sock = ssl.wrap_socket(sock,
                     keyfile=options.server.pemfile,
                     certfile=options.server.pemfile,
-                    ca_certs=options.server.cafile,
+                    ca_certs=options.server.cacert,
                     server_side=True,
                     cert_reqs=ssl.CERT_REQUIRED,
                 )

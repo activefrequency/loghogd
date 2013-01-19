@@ -7,7 +7,7 @@ $logger = new Loghog('proga', array(
     'secret' => 'qqq1',
     'mode' => Loghog::STREAM,
     'pemfile' => $CURDIR . '/certs/test-client.pem',
-    'cafile' => $CURDIR . '/certs/loghog-ca.cert'
+    'cacert' => $CURDIR . '/certs/loghog-ca.cert'
 ));
 
 while (1) {
