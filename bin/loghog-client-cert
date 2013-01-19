@@ -33,7 +33,7 @@ umask 0066
 
 client_key="$domain.key"
 client_req="$domain.req"
-client_cert="$domain.cert"
+client_pem="$domain.pem"
 
 ca_key="$ca_root/$ca_name-ca.key"
 ca_cert="$ca_root/$ca_name-ca.cert"
@@ -52,11 +52,13 @@ fi
 # Generate a client key and signed it with the CA
 openssl genrsa -out "$client_key" 1024
 openssl req -subj "/CN=$domain" -new -extensions v3_ca -key "$client_key" -out "$client_req"
-openssl x509 -req -in "$client_req" -CA "$ca_cert" -CAkey "$ca_key" -CAcreateserial -out "$client_cert"
+openssl x509 -req -in "$client_req" -CA "$ca_cert" -CAkey "$ca_key" -CAcreateserial -out "$client_pem"
+
+# Combine key and cert into one file
+cat "$client_key" >> "$client_pem"
 
 # Clean up
-rm "$client_req" "$ca_name-ca.srl"
-chmod 644 "$client_cert"
+rm "$client_req" "$ca_name-ca.srl" "$client_key"
 
 umask $old_umask
 
