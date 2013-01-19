@@ -8,8 +8,7 @@ define_opt('server', 'default_port', type=int, default=5566)
 define_opt('server', 'listen_ipv4', default='127.0.0.1')
 define_opt('server', 'listen_ipv6', default='[::1]')
 
-define_opt('server', 'keyfile', default='')
-define_opt('server', 'certfile', default='')
+define_opt('server', 'pemfile', default='')
 define_opt('server', 'cafile', default='')
 
 class Server(object):
@@ -113,10 +112,10 @@ class Server(object):
         '''Adds a new socket to the list of stream sockets.'''
 
         try:
-            if options.server.keyfile:
+            if options.server.pemfile:
                 sock = ssl.wrap_socket(sock,
-                    keyfile=options.server.keyfile,
-                    certfile=options.server.certfile,
+                    keyfile=options.server.pemfile,
+                    certfile=options.server.pemfile,
                     ca_certs=options.server.cafile,
                     server_side=True,
                     cert_reqs=ssl.CERT_REQUIRED,
