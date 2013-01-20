@@ -12,14 +12,8 @@ from loghog import LoghogHandler
 def setup_logging():
     logger = logging.getLogger()
 
-    ssl_info = {
-        'pemfile': os.path.join(curdir, 'certs', 'test-client.pem'),
-        'cacert': os.path.join(curdir, 'certs', 'loghog-ca.cert'),
-    }
-
-    handler = LoghogHandler('my-first-app', address=('localhost', 5566), secret='qqq1', compression=True, ssl_info=ssl_info, print_debug=True)
-    formatter = logging.Formatter('%(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
+    handler = LoghogHandler('my-first-app', address=('localhost', 5566))
+    handler.setFormatter(logging.Formatter('%(levelname)s - %(message)s'))
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
 
