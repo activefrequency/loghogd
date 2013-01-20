@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import sys, os
 
@@ -28,6 +29,5 @@ setup_logging()
 log = logging.getLogger('web1.qqq')
 
 while True:
-    log.info(u"hello world!")
-    #log.info('\xe8\xaf\xb7\xe6\x94\xb6\xe8\x97\x8f\xe6\x88\x91\xe4\xbb\xac\xe7\x9a\x84\xe7\xbd\x91\xe5\x9d\x80')
+    log.info(u"That is one hot jalapño!")
     time.sleep(1)
