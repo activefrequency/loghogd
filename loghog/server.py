@@ -22,7 +22,7 @@ class Server(object):
     HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
     MSG_FORMAT_PROTO = '%ds'
 
-    def __init__(self, callback):
+    def __init__(self, callback, listen_ipv4=None, listen_ipv6=None, default_port=None):
         self.log = logging.getLogger('server') # internal logger
 
         self.callback = callback
@@ -35,9 +35,13 @@ class Server(object):
         self.stream_buffers = {}
 
         self.client_socket_addrs = {}
+
+        listen_ipv4 = listen_ipv4 if listen_ipv4 is not None else options.server.listen_ipv4
+        listen_ipv6 = listen_ipv6 if listen_ipv6 is not None else options.server.listen_ipv6
+        default_port = default_port if default_port is not None else options.server.default_port
         
-        ipv4_addrs = parse_addrs(options.server.listen_ipv4, options.server.default_port)
-        ipv6_addrs = parse_addrs(options.server.listen_ipv6, options.server.default_port)
+        ipv4_addrs = parse_addrs(listen_ipv4, default_port)
+        ipv6_addrs = parse_addrs(listen_ipv6, default_port)
 
         for addr in ipv4_addrs:
             self.stream_socks.add(self.connect(addr, socket.AF_INET, socket.SOCK_STREAM))
