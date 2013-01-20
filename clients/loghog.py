@@ -101,11 +101,11 @@ class LoghogHandler(logging.handlers.SocketHandler):
                 cert_reqs=ssl.CERT_REQUIRED
             )
 
-            try:
-                s.connect(sa)
-            except Exception as e:
-                if self.print_debug:
-                    print(e)
+        try:
+            s.connect(sa)
+        except Exception as e:
+            if self.print_debug:
+                print(e)
 
         return s
 
