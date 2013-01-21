@@ -1,4 +1,30 @@
 
+# LogHog
+
+Loghog is a general purpose log storage/management system. Its main goal is to 
+make log management easy, no matter what you use as your applicaiton platform.
+
+LogHog consists of two main components: the logging daemon (loghogd) and your
+application which utilizes a LogHog client. The LogHog daemon is responsible for
+writing log messages to files, rotating the logs and keeping your logs secure
+from anyone who is not authorized to view them.
+
+## Examples
+
+First, install loghog (TODO: elaborate once we have places to download).
+
+Start it:
+
+    $ loghogd -c examples/conf/loghogd.conf
+
+In a different terminal start an example client app:
+
+    $ python examples/python-simple.py
+
+Watch the output on the first console, and the contents of
+/tmp/logs/my-first-app/root.log
+
+Notice that the files will be rotated every so often.
 
 ## Specifying Frequency
 
