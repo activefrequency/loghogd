@@ -13,6 +13,7 @@ def setup_logging():
     logger = logging.getLogger()
 
     handler = LoghogHandler('my-first-app', stream=False)
+    
     handler.setFormatter(logging.Formatter('%(levelname)s - %(message)s'))
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)

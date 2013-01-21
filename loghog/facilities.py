@@ -143,7 +143,10 @@ class FacilityDB(object):
         db = self.__class__()
 
         cp = RawConfigParser()
-        cp.read(filename)
+
+        f = open(filename, 'r')
+        cp.readfp(f, filename)
+        f.close()
 
         for section in cp.sections():
             app_id, _, mod_str = section.partition(':')

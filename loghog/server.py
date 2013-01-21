@@ -1,15 +1,24 @@
-import socket, select, struct, zlib, ssl, logging
+import socket, select, struct, zlib, ssl, logging, os
 from ext.groper import define_opt, options
 
-from util import parse_addrs, format_connection_message
+from util import parse_addrs, format_connection_message, normalize_path
 
 define_opt('server', 'default_port', type=int, default=5566)
-
 define_opt('server', 'listen_ipv4', default='127.0.0.1')
 define_opt('server', 'listen_ipv6', default='[::1]')
 
+define_opt('server', 'default_port_ssl', type=int, default=5577)
+define_opt('server', 'listen_ipv4_ssl', default='')
+define_opt('server', 'listen_ipv6_ssl', default='')
+
 define_opt('server', 'pemfile', default='')
 define_opt('server', 'cacert', default='')
+
+class ServerError(Exception):
+    '''Raised when the server experiences an error.'''
+
+class ServerStartupError(Exception):
+    '''Raised when the server cannot start.'''
 
 class Server(object):
     STREAM_SOCKET_BACKLOG = 5
@@ -22,13 +31,38 @@ class Server(object):
     HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
     MSG_FORMAT_PROTO = '%ds'
 
-    def __init__(self, callback, listen_ipv4=None, listen_ipv6=None, default_port=None):
+    def __init__(self, callback, conf_root, listen_ipv4=None, listen_ipv6=None, default_port=None, listen_ipv4_ssl=None, listen_ipv6_ssl=None, default_port_ssl=None, pemfile=None, cacert=None):
+        '''Initializes the server and listens on the specified addresses.
+
+        param callback : callable
+            The callable that is called as callabale(msg, addr) whenever a message is received.
+        param conf_root : unicode
+            Path to the root of the configuration tree
+        param listen_ipv4 : comma separated basestring of addresses
+            Addresses to listen on for TCP and UDP connections
+        param listen_ipv6 : comma separated basestring of addresses
+            Addresses to listen on for TCP and UDP connections
+        param default_port : short
+            Port to use for listen_ipv4 and listen_ipv6 if they don't specify a custom port
+        param listen_ipv4_ssl : comma separated basestring of addresses
+            Addresses to listen on for SSL/TLS connections
+        param listen_ipv6_ssl : comma separated basestring of addresses
+            Addresses to listen on for SSL/TLS connections
+        param default_port_ssl : short
+            Port to use for listen_ipv4_ssl and listen_ipv6_ssl if they don't specify a custom port
+        param pemfile : unicode
+            File path to the pem file containing private and public keys for SSL/TLS
+        param cacert : unicode
+            File path to the cacert file with which the public key in pemfile is signed
+        '''
+
         self.log = logging.getLogger('server') # internal logger
 
         self.callback = callback
         self.closed = False
 
         self.stream_socks = set()
+        self.ssl_socks = set()
         self.dgram_socks = set()
 
         self.client_stream_socks = set()
@@ -36,6 +70,10 @@ class Server(object):
 
         self.client_socket_addrs = {}
 
+        self.pemfile = normalize_path(pemfile if pemfile is not None else options.server.pemfile, conf_root)
+        self.cacert = normalize_path(cacert if cacert is not None else options.server.cacert, conf_root)
+
+        # Initialize server sockets
         listen_ipv4 = listen_ipv4 if listen_ipv4 is not None else options.server.listen_ipv4
         listen_ipv6 = listen_ipv6 if listen_ipv6 is not None else options.server.listen_ipv6
         default_port = default_port if default_port is not None else options.server.default_port
@@ -51,12 +89,58 @@ class Server(object):
             self.stream_socks.add(self.connect(addr, socket.AF_INET6, socket.SOCK_STREAM))
             self.dgram_socks.add(self.connect(addr, socket.AF_INET6, socket.SOCK_DGRAM))
 
+        # Same thing for SSL addresses, except not datagram sockets
+        listen_ipv4_ssl = listen_ipv4_ssl if listen_ipv4_ssl is not None else options.server.listen_ipv4_ssl
+        listen_ipv6_ssl = listen_ipv6_ssl if listen_ipv6_ssl is not None else options.server.listen_ipv6_ssl
+        default_port_ssl = default_port_ssl if default_port_ssl is not None else options.server.default_port_ssl
+
+        self.validate_ssl_config(listen_ipv4_ssl, listen_ipv6_ssl)
+        
+        ipv4_addrs_ssl = parse_addrs(listen_ipv4_ssl, default_port_ssl)
+        ipv6_addrs_ssl = parse_addrs(listen_ipv6_ssl, default_port_ssl)
+
+        for addr in ipv4_addrs_ssl:
+            s = self.connect(addr, socket.AF_INET, socket.SOCK_STREAM, True)
+            self.stream_socks.add(s)
+            self.ssl_socks.add(s)
+
+        for addr in ipv6_addrs_ssl:
+            s = self.connect(addr, socket.AF_INET6, socket.SOCK_STREAM, True)
+            self.stream_socks.add(s)
+            self.ssl_socks.add(s)
+
         self.all_socks = set(self.stream_socks | self.dgram_socks)
 
-    def connect(self, address, family, proto):
+    def validate_ssl_config(self, listen_ipv4_ssl, listen_ipv6_ssl):
+        '''Validates all SSL options at startup to prevent runtime errors.
+
+        This method raises a ServerException if it finds an issue.'''
+
+        if (len(listen_ipv4_ssl) + len(listen_ipv6_ssl)) == 0:
+            return
+
+        if not self.pemfile:
+            raise ServerStartupError('Configuration for server.pemfile is not specified, but we are supposed to listen for SSL connections.')
+    
+        if not self.cacert:
+            raise ServerStartupError('Configuration for server.cacert is not specified, but we are supposed to listen for SSL connections.')
+        
+        if not os.path.exists(self.pemfile):
+            raise ServerStartupError('server.pemfile file does not exist: {}'.format(self.pemfile))
+        
+        if not os.path.exists(self.cacert):
+            raise ServerStartupError('server.cacert file does not exist: {}'.format(self.pemfile))
+
+        if not os.access(self.pemfile, os.R_OK):
+            raise ServerStartupError('{} is not readable by the current user.'.format(self.pemfile))
+
+        if not os.access(self.cacert, os.R_OK):
+            raise ServerStartupError('{} is not readable by the current user.'.format(self.cacert))
+
+    def connect(self, address, family, proto, use_ssl=False):
         '''Returns a socket for a given addres, family and protocol.'''
 
-        self.log.info(format_connection_message(address, family, proto))
+        self.log.info(format_connection_message(address, family, proto, use_ssl))
         sock = socket.socket(family, proto)
 
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -96,7 +180,7 @@ class Server(object):
                     # Accept new stream
                     clientsock, addr = sock.accept()
                     try:
-                        self.connect_client_stream(clientsock, addr)
+                        self.connect_client_stream(clientsock, addr, use_ssl=(sock in self.ssl_socks))
                     except (socket.error, ssl.SSLError) as e:
                         self.log.exception(e)
 
@@ -112,15 +196,15 @@ class Server(object):
                     if not data:
                         self.disconnect_client_stream(sock)
 
-    def connect_client_stream(self, sock, addr):
+    def connect_client_stream(self, sock, addr, use_ssl):
         '''Adds a new socket to the list of stream sockets.'''
 
         try:
-            if options.server.pemfile:
+            if use_ssl:
                 sock = ssl.wrap_socket(sock,
-                    keyfile=options.server.pemfile,
-                    certfile=options.server.pemfile,
-                    ca_certs=options.server.cacert,
+                    keyfile=self.pemfile,
+                    certfile=self.pemfile,
+                    ca_certs=self.cacert,
                     server_side=True,
                     cert_reqs=ssl.CERT_REQUIRED,
                 )

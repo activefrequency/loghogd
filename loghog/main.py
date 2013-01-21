@@ -11,6 +11,7 @@ from writer import Writer
 from processor import Processor
 from facilities import FacilityDB, FacilityError
 from daemon import daemonize, write_pid, drop_privileges
+from util import normalize_path
 
 from ext.groper import define_opt, options, init_options, generate_sample_config
 
@@ -22,7 +23,7 @@ define_opt('main', 'config', cmd_name='config', cmd_short_name='c', is_config_fi
 define_opt('main', 'facilities_config', cmd_name='facilities-config', cmd_short_name='F')
 define_opt('main', 'pidfile', cmd_name='pid', cmd_short_name='p', default='loghogd.pid')
 define_opt('main', 'daemon', type=bool, cmd_name='daemon', cmd_short_name='d')
-define_opt('main', 'user', cmd_name='user', default='loghog')
+define_opt('main', 'user', cmd_name='user', default=None)
 
 define_opt('main', 'logdir', cmd_name='log-dir', cmd_short_name='L', default='/var/log/loghogd')
 define_opt('main', 'workdir', cmd_name='work-dir', default='/var/lib/loghogd')
@@ -31,6 +32,7 @@ define_opt('main', 'rundir', cmd_name='work-dir', default='/var/run/loghogd')
 define_opt('log', 'filename', cmd_name='log', cmd_short_name='l', default='/var/log/loghogd/loghogd.log')
 define_opt('log', 'backup_count', type=int, default=14)
 define_opt('log', 'when', default='midnight')
+define_opt('log', 'level', default='INFO')
 
 def shutdown(signum, server, writer):
     logger = logging.getLogger()
@@ -71,7 +73,8 @@ def setup_logging():
         handler.setFormatter(formatter)
         logger.addHandler(handler)
 
-    logger.setLevel(logging.DEBUG)
+    level = getattr(logging, options.log.level.upper())
+    logger.setLevel(level)
 
 def create_dirs():
     '''Pre-creates necessary directories and chowns them if necessary.'''
@@ -86,6 +89,9 @@ def create_dirs():
     for d in dirs:
         if not os.path.exists(d):
             os.makedirs(d)
+
+    if not options.main.user:
+        return
 
     pwnam = pwd.getpwnam(options.main.user)
     uid, gid = (pwnam[2], pwnam[3])
@@ -104,9 +110,15 @@ def main():
         print(generate_sample_config()) # XXX: this doesn't yet work properly because of groper
         sys.exit()
 
+    conf_root = os.path.dirname(os.path.abspath(options.main.config))
+
     facility_db = FacilityDB()
     try:
-        facility_db.load_config(options.main.facilities_config)
+        facility_db.load_config(normalize_path(options.main.facilities_config, conf_root))
+    except (IOError) as e:
+        sys.stderr.write("Error reading {}: {}\n".format(options.main.facilities_config, e))
+        sys.stderr.flush()
+        sys.exit(os.EX_CONFIG)
     except (FacilityError, configparser.Error) as e:
         sys.stderr.write("{} contains errors:\n\n".format(options.main.facilities_config))
 
@@ -140,7 +152,7 @@ def main():
         writer = Writer(facility_db, options.main.logdir)
         processor = Processor(facility_db, writer)
 
-        server = Server(processor.on_message)
+        server = Server(processor.on_message, conf_root)
 
         signal_handler = make_shutdown_handler(server, writer)
 
@@ -148,12 +160,17 @@ def main():
         signal.signal(signal.SIGTERM, signal_handler)
         
         signal.signal(signal.SIGHUP, make_reload_handler(facility_db, writer))
+    except Exception as e:
+        logging.getLogger().error(e)
+        logging.getLogger().error('Exiting abnormally due to an error at startup.')
+        sys.exit(os.EX_CONFIG)
 
+    try:
         server.run()
     except Exception as e:
         logging.getLogger().exception(e)
-        logging.getLogger().error('Exiting abnormally due to an error.')
-        raise
+        logging.getLogger().error('Exiting abnormally due to an error at runtime.')
+        sys.exit(os.EX_SOFTWARE)
 
 if __name__ == '__main__':
     main()

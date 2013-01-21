@@ -8,7 +8,7 @@ class ServerTest(unittest.TestCase):
     FORMAT_PROTO = '!LL %ds'
  
     def setUp(self):
-        self.server = Server(None, '', '', 0)
+        self.server = Server(None, conf_root='', listen_ipv4='', listen_ipv6='', listen_ipv4_ssl='', listen_ipv6_ssl='', default_port=0, default_port_ssl=0, pemfile='', cacert='')
 
     def test_parse_datagram_1(self):
         payload = u"That is one hot jalapño!".encode('utf-8')

@@ -9,8 +9,6 @@ class Loghog {
     const LVL_CRITICAL = 4;
 
     const VERSION = 1;
-    const DGRAM = 0x01;
-    const STREAM = 0x02;
 
     const HMAC_DIGEST_ALGO = 'md5';
 
@@ -25,12 +23,12 @@ class Loghog {
     const DEFAULT_PORT = 5566;
 
 
-    public function __construct($app_name, $options) {
+    public function __construct($app_name, $options = array()) {
         $this->app_name = $app_name;
 
         $this->address = isset($options['address']) ? $options['address'] : 'localhost';
         $this->port = isset($options['port']) ? $options['port'] : self::DEFAULT_PORT;
-        $this->mode = isset($options['mode']) ? $options['mode'] : self::STREAM;
+        $this->stream = isset($options['stream']) ? (bool) $options['stream'] : true;
         $this->secret = isset($options['secret']) ? $options['secret'] : null;
         $this->compression = isset($options['compression']) ? $options['compression'] : null;
         $this->hostname = isset($options['hostname']) ? $options['hostname'] : php_uname('n');
@@ -82,7 +80,7 @@ class Loghog {
             $sock = @stream_socket_client($addr, $errno, $errstr, 1, STREAM_CLIENT_CONNECT, $sc);
         }
         else {
-            if ($this->mode == self::STREAM) {
+            if ($this->stream) {
                 $addr = sprintf('tcp://%s:%d', $this->address, $this->port);
                 $sock = @stream_socket_client($addr);
             }
@@ -150,10 +148,10 @@ class Loghog {
             return;
         }
 
-        if ($this->mode == self::STREAM) {
+        if ($this->stream) {
             $n = @fwrite($this->sock, $msg);
         }
-        else if ($this->mode == self::DGRAM) {
+        else {
             $n = @fwrite($this->sock, $msg);
         }
         

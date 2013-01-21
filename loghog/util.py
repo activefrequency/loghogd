@@ -1,5 +1,5 @@
 
-import re, socket
+import re, socket, os.path
 
 str_to_addrs = lambda s: tuple(filter(lambda x: x, map(lambda a: a.strip(), s.strip().split(','))))
 
@@ -33,7 +33,7 @@ def normalize_inet_addr(addr, default_port):
 
     return addr, port
 
-def format_connection_message(address, family, proto):
+def format_connection_message(address, family, proto, use_ssl):
     '''Returns a formatted log message based on the given connection parameters.'''
 
     FAM_STRS = {
@@ -43,13 +43,16 @@ def format_connection_message(address, family, proto):
     }
 
     PROTO_STRS = {
-        (socket.AF_INET, socket.SOCK_STREAM): 'TCP',
-        (socket.AF_INET6, socket.SOCK_STREAM): 'TCP',
-        (socket.AF_UNIX, socket.SOCK_STREAM): 'Stream',
+        (socket.AF_INET, socket.SOCK_STREAM, True): 'SSL/TLS',
+        (socket.AF_INET6, socket.SOCK_STREAM, True): 'SSL/TLS',
 
-        (socket.AF_INET, socket.SOCK_DGRAM): 'UDP',
-        (socket.AF_INET6, socket.SOCK_DGRAM): 'UDP',
-        (socket.AF_UNIX, socket.SOCK_DGRAM): 'Datagram',
+        (socket.AF_INET, socket.SOCK_STREAM, False): 'TCP',
+        (socket.AF_INET6, socket.SOCK_STREAM, False): 'TCP',
+        (socket.AF_UNIX, socket.SOCK_STREAM, False): 'Stream',
+
+        (socket.AF_INET, socket.SOCK_DGRAM, False): 'UDP',
+        (socket.AF_INET6, socket.SOCK_DGRAM, False): 'UDP',
+        (socket.AF_UNIX, socket.SOCK_DGRAM, False): 'Datagram',
     }
 
     ADDR_FORMATTER = {
@@ -58,7 +61,7 @@ def format_connection_message(address, family, proto):
         socket.AF_UNIX: lambda a: a,
     }
 
-    return 'Listening on a {} {} socket on {}.'.format(FAM_STRS[family], PROTO_STRS[family, proto], ADDR_FORMATTER[family](address))
+    return 'Listening on a {} {} socket on {}.'.format(FAM_STRS[family], PROTO_STRS[family, proto, use_ssl], ADDR_FORMATTER[family](address))
 
 def pretty_addr(addr):
     '''Converts a full address as returned by socket.accept() to a human-readable format.'''
@@ -68,4 +71,19 @@ def pretty_addr(addr):
 
     if len(addr) == 4:
         return '[{}]:{}'.format(*addr[:2])
+
+def normalize_path(filename, conf_root):
+    '''Returns the absolute path to a file.
+
+    param filename : unicode
+        If filename is an absolute path it is returned as is. Otherwise, it is 
+        combined with conf_root to form an absolute path.
+    param conf_root : unicode
+        A directory where loghogd.conf lives.
+    '''
+
+    if os.path.isabs(filename):
+        return filename
+
+    return os.path.join(conf_root, filename)
 
