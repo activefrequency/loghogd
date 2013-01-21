@@ -78,6 +78,10 @@ class FacilitiesTest(unittest.TestCase):
     def test_facility_search_6(self):
         f = self.db.get_facility('no-such-app', '')
         self.assertEqual(f, None)
+    
+    def test_root_inheritance(self):
+        f = self.db.get_facility('app-name', 'web')
+        self.assertEqual(f.secret, 'foo')
 
     def test_no_root_config(self):
         filename = os.path.join(os.path.dirname(__file__), 'data', 'facilities-with-no-root.conf')

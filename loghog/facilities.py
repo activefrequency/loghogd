@@ -144,42 +144,75 @@ class FacilityDB(object):
 
         cp = RawConfigParser()
 
+        # NOTE: apparently, cp.read() will happily do nothing if the file doesn't exist.
+        # Thus, we use cp.readfp() instead, letting open() fail if something is wrong.
         f = open(filename, 'r')
         cp.readfp(f, filename)
         f.close()
 
+        root_facilities = {}
+        # First we add all root facilities
         for section in cp.sections():
             app_id, _, mod_str = section.partition(':')
+            if mod_str:
+                # Skip non-root facilities
+                continue
 
-            settings = {}
-            settings['app_id'] = app_id
-            settings['mod_id'] = parse_mod_id(mod_str)
-            settings['rotate'] = cp.get(section, 'rotate')
-            settings['backup_count'] = cp.getint(section, 'backup_count')
-            settings['secret'] = cp.get(section, 'secret') if cp.has_option(section, 'secret') else None
-            settings['max_size'] = cp.getint(section, 'max_size') if cp.has_option(section, 'max_size') else None
-            settings['file_per_host'] = cp.getboolean(section, 'file_per_host') if cp.has_option(section, 'file_per_host') else False
+            facility = self.parse_section(cp, section)
+            db.add_facility(facility)
+            root_facilities[app_id] = facility
+        
+        for section in cp.sections():
+            app_id, _, mod_str = section.partition(':')
+            if not mod_str:
+                # Skip root facilities
+                continue
 
-            if cp.has_option(section, 'flush_every'):
-                settings['flush_every'] = cp.getint(section, 'flush_every')
+            try:
+                root_facility = root_facilities[app_id]
+            except KeyError:
+                raise FacilityError('Application {} lacks a root module. Define [{}] section in the facility config file.'.format(app_id, app_id))
 
-            db.add_facility(Facility(**settings))
-
-        db.validate()
+            facility = self.parse_section(cp, section, root_facility=root_facility)
+            db.add_facility(facility)
 
         self.facilities = db.facilities
         self.filename = filename
+
+    def parse_section(self, cp, section, root_facility=None):
+        '''Parses a ConfigParser section and returns a Facility instance.'''
+
+        app_id, _, mod_str = section.partition(':')
+
+        # These options are defined directly
+        settings = {}
+        settings['app_id'] = app_id
+        settings['mod_id'] = parse_mod_id(mod_str)
+        settings['rotate'] = cp.get(section, 'rotate')
+        settings['backup_count'] = cp.getint(section, 'backup_count')
+        
+        # Figure out values of inherited params
+        def_secret = None
+        def_max_size = None
+        def_file_per_host = False
+        def_flush_every = 1
+
+        if root_facility:
+            def_secret = root_facility.secret
+            def_max_size = root_facility.max_size
+            def_file_per_host = root_facility.file_per_host
+            def_flush_every = root_facility.flush_every
+
+        # These options can be inherited
+        settings['secret'] = cp.get(section, 'secret') if cp.has_option(section, 'secret') else def_secret
+        settings['max_size'] = cp.getint(section, 'max_size') if cp.has_option(section, 'max_size') else def_max_size
+        settings['file_per_host'] = cp.getboolean(section, 'file_per_host') if cp.has_option(section, 'file_per_host') else def_file_per_host
+        settings['flush_every'] = cp.getint(section, 'flush_every') if cp.has_option(section, 'flush_every') else def_flush_every
+
+        return Facility(**settings)
 
     def reload(self):
         '''Reloads facilities using config information supplied previously.'''
 
         self.load_config(self.filename)
-
-    def validate(self):
-        '''Validates facilities, ensuring that all root modules exist.'''
-
-        root_id = ('root',) 
-        for app_id in self.get_applications():
-            if root_id not in self.facilities[app_id]:
-                raise FacilityError('Application {} lacks a root module. Define [{}] section in the facility config file.'.format(app_id, app_id))
 
