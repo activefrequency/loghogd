@@ -1,4 +1,10 @@
-loghog (0.1) lucid; urgency=low
+loghogd (0.2) precise; urgency=low
+
+  * Converting release to precise.
+
+ -- Igor Partola <igor@activefrequency.com>  Mon, 22 Jan 2013 16:07:28 -0500
+
+loghogd (0.1) precise; urgency=low
 
   * source package automatically created by stdeb 0.6.0+git
 
