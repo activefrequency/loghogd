@@ -1,5 +1,5 @@
 #!/bin/sh
-# preinst script for python-loghogd
+# preinst script for loghogd
 #
 # see: dh_installdeb(1)
 
@@ -17,9 +17,7 @@ LOGHOG_USER='loghog'
 
 case "$1" in
     install|upgrade)
-        id "$LOGHOG_USER" >/dev/null 2>&1
-        user_exists=$?
-        if [ $user_exists -ne 0 ]; then
+        if ! getent passwd $LOGHOG_USER > /dev/null; then
             useradd --system "$LOGHOG_USER"
         fi
     ;;

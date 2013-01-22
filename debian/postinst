@@ -1,5 +1,5 @@
 #!/bin/sh
-# postinst script for python-loghogd
+# postinst script for loghogd
 #
 # see: dh_installdeb(1)
 
@@ -20,12 +20,10 @@ set -e
 
 case "$1" in
     configure)
-        update-rc.d python-loghogd defaults
-
         if [ -x /usr/sbin/invoke-rc.d ]; then
-            invoke-rc.d python-loghogd start
+            invoke-rc.d loghogd start
         else
-            /etc/init.d/python-loghogd start
+            /etc/init.d/loghogd start
         fi
     ;;
 

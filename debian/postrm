@@ -1,5 +1,5 @@
 #!/bin/sh
-# postrm script for python-loghogd
+# postrm script for loghogd
 #
 # see: dh_installdeb(1)
 
@@ -22,11 +22,7 @@ LOGHOG_USER='loghog'
 
 case "$1" in
     purge|abort-install|remove|disappear)
-        update-rc.d python-loghogd remove
-
-        id "$LOGHOG_USER" >/dev/null 2>&1
-        user_exists=$?
-        if [ $user_exists -eq 0 ]; then
+        if ! getent passwd $LOGHOG_USER > /dev/null; then
             rmuser "$LOGHOG_USER"
         fi
     ;;
