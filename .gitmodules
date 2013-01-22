@@ -1,6 +1,6 @@
-[submodule "loghog/ext/groper"]
-	path = loghog/ext/groper
+[submodule "loghogd/ext/groper"]
+	path = loghogd/ext/groper
 	url = git@github.com:ipartola/groper.git
-[submodule "loghog/ext/croniter-upstream"]
-	path = loghog/ext/croniter-upstream
+[submodule "loghogd/ext/croniter-upstream"]
+	path = loghogd/ext/croniter-upstream
 	url = git://github.com/ipartola/croniter.git

@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
-from loghog import __version__ as VERSION
+from loghogd import __version__ as VERSION
 
 setup(
-    name = 'loghog',
+    name = 'loghogd',
     version = VERSION,
     description = 'Modern log storage server',
     author = 'Active Frequency',
     author_email = 'info@activefrequency.com',
     url = 'https://github.com/activefrequency/loghog',
     license = 'Apache2',
-    py_modules = ['loghog'],
+    packages = find_packages(exclude=['ez_setup', 'examples', 'tests']),
     scripts = ['bin/loghogd', 'bin/loghog-server-cert', 'bin/loghog-client-cert'],
     classifiers=[
         'Development Status :: 4 - Beta',
