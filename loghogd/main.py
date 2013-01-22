@@ -27,7 +27,7 @@ define_opt('main', 'user', cmd_name='user', default=None)
 
 define_opt('main', 'logdir', cmd_name='log-dir', cmd_short_name='L', default='/var/log/loghogd')
 define_opt('main', 'workdir', cmd_name='work-dir', default='/var/lib/loghogd')
-define_opt('main', 'rundir', cmd_name='work-dir', default='/var/run/loghogd')
+define_opt('main', 'rundir', cmd_name='run-dir', default='/var/run/loghogd')
 
 define_opt('log', 'filename', cmd_name='log', cmd_short_name='l', default='/var/log/loghogd/loghogd.log')
 define_opt('log', 'backup_count', type=int, default=14)
