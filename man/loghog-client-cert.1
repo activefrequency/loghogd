@@ -1,0 +1,39 @@
+.\" Manpage for loghog-client-cert.
+.\" Contact igor@activefrequency.com to correct errors or typos.
+.TH man 1 "21 Jan 2013" "0.1" "loghog-client-cert man page"
+
+.SH NAME
+loghog-client-cert \- script that generates an SSL client-side certificate.
+
+.SH SYNOPSIS
+loghog-client-cert <domain> [ca-path] [ca-name]
+loghog-client-cert [--help]
+loghog-client-cert [-h]
+
+.SH DESCRIPTION
+loghog-client-cert is used to generate an SSL client-side certificate signed
+by an SSL Certificate Authority.
+
+Typical usage is to generate a loghog server certificate using
+\fBloghog-server-cert\fR as root in /etc/loghogd/certs/. After that, generate
+the client side certificate inside your project using \fBloghog-client-cert\fR
+as follows:
+
+  loghog-client-cert `hostname` /etc/loghogd/certs/ loghog
+
+.SH OPTIONS
+loghog-client-cert takes an optional domain name. The default is
+\fIloghog\fR. It also takes an option to print the help info.
+
+.TP
+\fB-h | --help\fR
+Prints the help info for this executable.
+
+.SH SEE ALSO
+loghogd(1), loghog-server-cert(1)
+
+.SH BUGS
+No known bugs.
+
+.SH AUTHOR
+Igor Partola (igor@activefrequency.com)

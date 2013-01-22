@@ -1,0 +1,93 @@
+.\" Manpage for loghogd.
+.\" Contact igor@activefrequency.com to correct errors or typos.
+.TH man 1 "21 Jan 2013" "0.1" "loghogd man page"
+
+.SH NAME
+loghogd \- the LogHog server
+
+.SH SYNOPSIS
+loghogd --config=<config> --facilities-config=<facilities-config>
+        [--check-config] [--daemon] [--log=<log>] [--log-dir=<log-dir>] 
+        [--pid=<pid>] [--run-dir=<run-dir>] [--user=<user>] 
+        [--work-dir=<work-dir>]
+loghogd -c <config> -F <facilities-config> [-d] [-l <log>] [-L <log-dir>]
+        [-p <pid>]
+loghogd [--help]
+loghogd [-h]
+
+.SH DESCRIPTION
+loghogd is the main logging server. You can communicate with it using one of
+the many available loghog clients. Generally, you only need to supply the
+location of a configuration file (loghogd.conf) to start loghogd.
+
+.SH OPTIONS
+loghogd takes a number of options which can also be configured via the config
+file. See the loghogd.conf file in your docs directory for additional
+configuration parameters
+
+.TP
+\fB-c \fIpath\fB | --config\fI=path\fR
+Path to the configuration file to use.
+
+.TP
+\fB-F \fIpath\fB | --facilities-config\fI=path\fR
+Path to the facilities configuration file to use. The equivalent config file
+option is \fBfacilities_config\fR [main] .
+
+.TP
+\fB--check-config\fR
+Simply checks that the supplied configuration files are valid and will work.
+Exits with a 0 status if the configuration files are valid, and non-zero
+otherwise
+
+.TP
+\fB-d | --daemon\fR
+If supplied, loghogd will fork into the background. The equivalent config file
+option is \fBdaemon\fR in section [main] (value can be yes or no).
+
+.TP
+\fB-l \fIpath\fB | --log\fI=path\fR
+The location of loghogd's internal log file. The equivalent config file
+option is \fBfilename\fR in the [log] section.
+
+.TP
+\fB-L \fIpath\fB | --log-dir\fI=path\fR
+The path where loghogd will store incoming logs. The equivalent config file
+option is \fBlogdir\fR in the [main] section.
+
+.TP
+\fB-p \fIpath\fB | --pid\fI=path\fR
+Where loghogd will put its PID file. The equivalent config file option is 
+\fBpidfile\fR in the [main] section. Typically, this should be a file in
+\fBrundir\fR.
+
+.TP
+\fB--run-dir\fI=path\fR
+Where loghogd will place its runtime files. The equivalent config file option is 
+\fBrundir\fR in the [main] section.
+
+.TP
+\fB--work-dir\fI=path\fR
+Where loghogd will place its work files (such as the log ratation schedule
+database, etc.) The equivalent config file option is \fBworkdir\fR in the 
+[main] section.
+
+.TP
+\fB--user\fI=user\fR
+If specified and loghogd is started as root, it will drop privileges to
+this user after creating the necessary directories, etc. 
+The equivalent config file option is \fBuser\fR in the 
+[main] section.
+
+.TP
+\fB-h | --help\fR
+Prints the help info for this executable.
+
+.SH SEE ALSO
+loghogd(1), loghog-client-cert(1)
+
+.SH BUGS
+No known bugs.
+
+.SH AUTHOR
+Igor Partola (igor@activefrequency.com)
