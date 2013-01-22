@@ -6,3 +6,5 @@
 loghog.egg-info
 
 loghogd_local.conf
+
+build
