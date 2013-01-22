@@ -10,9 +10,9 @@ loghogd_local.conf
 build
 
 debian/files
-debian/python-loghog.debhelper.log
-debian/python-loghog.postinst.debhelper
-debian/python-loghog.prerm.debhelper
-debian/python-loghog.substvars
-debian/python-loghog/
+debian/python-loghogd.debhelper.log
+debian/python-loghogd.postinst.debhelper
+debian/python-loghogd.prerm.debhelper
+debian/python-loghogd.substvars
+debian/python-loghogd/
 
