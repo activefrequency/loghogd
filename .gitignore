@@ -3,8 +3,16 @@
 
 *.swp
 
-loghog.egg-info
+*.egg-info
 
 loghogd_local.conf
 
 build
+
+debian/files
+debian/python-loghog.debhelper.log
+debian/python-loghog.postinst.debhelper
+debian/python-loghog.prerm.debhelper
+debian/python-loghog.substvars
+debian/python-loghog/
+
