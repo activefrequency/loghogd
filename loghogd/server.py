@@ -144,7 +144,13 @@ class Server(object):
         sock = socket.socket(family, proto)
 
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(address)
+        if 'host' in address and 'port' in address:
+            addr = (address['host'], address['port'])
+        elif 'filename' in address:
+            addr = address['filename']
+        else:
+            raise ServerStartupError("Address {0} is not a proper LogHog address.".format(address))
+        sock.bind((addr))
 
         if proto == socket.SOCK_STREAM:
             sock.listen(self.STREAM_SOCKET_BACKLOG)

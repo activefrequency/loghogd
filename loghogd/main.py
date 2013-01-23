@@ -169,6 +169,7 @@ def main():
         
         signal.signal(signal.SIGHUP, make_reload_handler(facility_db, writer))
     except Exception as e:
+        raise
         logging.getLogger().error(e)
         logging.getLogger().error('Exiting abnormally due to an error at startup.')
         sys.exit(os.EX_CONFIG)

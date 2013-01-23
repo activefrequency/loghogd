@@ -8,7 +8,11 @@ def parse_addrs(addrs_str, default_port):
     
     normalize = lambda a: normalize_inet_addr(a, default_port)
 
-    return map(normalize, addrs)
+    result = []
+    for (address, port) in map(normalize, addrs):
+        result.append({'host': address, 'port': port, })
+
+    return result
     
 def normalize_inet_addr(addr, default_port):
     '''Takes in an IP address string and a default port and returns a normalized (addr, port) tuple.'''
@@ -56,9 +60,9 @@ def format_connection_message(address, family, proto, use_ssl):
     }
 
     ADDR_FORMATTER = {
-        socket.AF_INET: lambda a: '{0}:{1}'.format(*address),
-        socket.AF_INET6: lambda a: '[{0}]:{1}'.format(*address),
-        socket.AF_UNIX: lambda a: a,
+        socket.AF_INET: lambda a: '{host}:{port}'.format(**address),
+        socket.AF_INET6: lambda a: '[{host}]:{port}'.format(**address),
+        socket.AF_UNIX: lambda a: a['filename'],
     }
 
     return 'Listening on a {0} {1} socket on {2}.'.format(FAM_STRS[family], PROTO_STRS[family, proto, use_ssl], ADDR_FORMATTER[family](address))

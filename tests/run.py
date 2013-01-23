@@ -2,7 +2,7 @@
 import sys, os, unittest
 
 curdir = os.path.abspath(os.path.dirname(__file__))
-src = os.path.join(os.path.dirname(curdir), 'loghog')
+src = os.path.join(os.path.dirname(curdir), 'loghogd')
 
 sys.path = [src] + sys.path
 
