@@ -23,7 +23,7 @@ LOGHOG_USER='loghog'
 case "$1" in
     purge|abort-install|remove|disappear)
         if ! getent passwd $LOGHOG_USER > /dev/null; then
-            rmuser "$LOGHOG_USER"
+            userdel "$LOGHOG_USER"
         fi
     ;;
     upgrade|failed-upgrade|abort-upgrade)
