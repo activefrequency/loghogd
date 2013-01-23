@@ -13,7 +13,7 @@ from facilities import FacilityDB, FacilityError
 from daemon import daemonize, write_pid, drop_privileges
 from util import normalize_path
 
-from ext.groper import define_opt, options, init_options, generate_sample_config
+from ext.groper import define_opt, options, init_options, generate_sample_config, OptionsError, usage
 
 define_opt('main', 'help', type=bool, cmd_name='help', cmd_short_name='h', cmd_group='help', is_help=True)
 define_opt('main', 'generate_config', type=bool, cmd_name='gen-config', cmd_group='gen-config', cmd_only=True)
@@ -103,7 +103,15 @@ def create_dirs():
                     os.chown(os.path.join(root, x), uid, gid)
 
 def main():
-    init_options()
+    try:
+        init_options()
+    except OptionsError as e:
+        sys.stderr.write("Error: {}\n\n".format(e))
+        sys.stderr.write(usage())
+        sys.stderr.write("\n");
+        sys.stderr.flush()
+        sys.exit(os.EX_CONFIG)
+        
     atexit.register(exit_handler)
     
     if options.main.generate_config:
