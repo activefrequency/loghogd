@@ -106,7 +106,7 @@ def main():
     try:
         init_options()
     except OptionsError as e:
-        sys.stderr.write("Error: {}\n\n".format(e))
+        sys.stderr.write("Error: {0}\n\n".format(e))
         sys.stderr.write(usage())
         sys.stderr.write("\n");
         sys.stderr.flush()
@@ -124,16 +124,16 @@ def main():
     try:
         facility_db.load_config(normalize_path(options.main.facilities_config, conf_root))
     except (IOError) as e:
-        sys.stderr.write("Error reading {}: {}\n".format(options.main.facilities_config, e))
+        sys.stderr.write("Error reading {0}: {1}\n".format(options.main.facilities_config, e))
         sys.stderr.flush()
         sys.exit(os.EX_CONFIG)
     except (FacilityError, configparser.Error) as e:
-        sys.stderr.write("{} contains errors:\n\n".format(options.main.facilities_config))
+        sys.stderr.write("{0} contains errors:\n\n".format(options.main.facilities_config))
 
         if hasattr(e, 'lineno'):
-            e = 'Error on line {}: {}'.format(e.lineno, e.message.split("\n")[0].strip())
+            e = 'Error on line {0}: {1}'.format(e.lineno, e.message.split("\n")[0].strip())
 
-        sys.stderr.write("{}\n\n".format(e))
+        sys.stderr.write("{0}\n\n".format(e))
         sys.stderr.write("Exiting now.\n")
         sys.stderr.flush()
         sys.exit(os.EX_CONFIG)

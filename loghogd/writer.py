@@ -85,7 +85,7 @@ class LogFile(object):
         filename = self.filename
         backup_count = self.backup_count
 
-        self.log.info('Rotating {} based on "{}"'.format(self.filename, self.rotate))
+        self.log.info('Rotating {0} based on "{1}"'.format(self.filename, self.rotate))
         
         try:
             # Close the file before renaming it
@@ -95,14 +95,14 @@ class LogFile(object):
                 # Rotate by size
                 for _i in range(backup_count - 1):
                     i = backup_count - _i - 1
-                    self._rename('{}.{}'.format(filename, i), '{}.{}'.format(filename, i + 1))
+                    self._rename('{0}.{1}'.format(filename, i), '{0}.{1}'.format(filename, i + 1))
 
-                self._rename(filename, '{}.1'.format(filename))
+                self._rename(filename, '{0}.1'.format(filename))
 
             else:
                 # Rotate on schedule
                 last_rotation_dt = datetime.datetime.fromtimestamp(self.scheduler.get_last_execution(filename))
-                self._rename(filename, '{}.{}'.format(filename, last_rotation_dt.strftime('%Y-%m-%d-%H-%M-%S')))
+                self._rename(filename, '{0}.{1}'.format(filename, last_rotation_dt.strftime('%Y-%m-%d-%H-%M-%S')))
 
         finally:
             # Make sure that no matter what we try to open the file
@@ -119,7 +119,7 @@ class LogFile(object):
             else:
                 raise
 
-        self.log.debug('Renamed {} to {}'.format(src, dst))
+        self.log.debug('Renamed {0} to {1}'.format(src, dst))
 
 class Writer(object):
 
@@ -147,7 +147,7 @@ class Writer(object):
         if log_file.should_rotate():
             log_file.do_rotate()
 
-        s = u'{!s} - {!s} - {!s}\n'.format(datetime.datetime.now(), msg['hostname'], msg['body']).encode('utf8')
+        s = u'{0!s} - {1!s} - {2!s}\n'.format(datetime.datetime.now(), msg['hostname'], msg['body']).encode('utf8')
 
         log_file.write(s)
 
@@ -155,9 +155,9 @@ class Writer(object):
         '''Returns the log filename given a hostname.'''
 
         if facility.file_per_host:
-            return os.path.join(self.log_dir, facility.app_id, '{}-{}.log'.format(hostname, facility.mod_str))
+            return os.path.join(self.log_dir, facility.app_id, '{0}-{1}.log'.format(hostname, facility.mod_str))
         else:
-            return os.path.join(self.log_dir, facility.app_id, '{}.log'.format(facility.mod_str))
+            return os.path.join(self.log_dir, facility.app_id, '{0}.log'.format(facility.mod_str))
 
     def get_file(self, hostname, facility):
         '''Returns a LogFile instance that should be used.

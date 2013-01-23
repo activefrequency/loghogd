@@ -126,16 +126,16 @@ class Server(object):
             raise ServerStartupError('Configuration for server.cacert is not specified, but we are supposed to listen for SSL connections.')
         
         if not os.path.exists(self.pemfile):
-            raise ServerStartupError('server.pemfile file does not exist: {}'.format(self.pemfile))
+            raise ServerStartupError('server.pemfile file does not exist: {0}'.format(self.pemfile))
         
         if not os.path.exists(self.cacert):
-            raise ServerStartupError('server.cacert file does not exist: {}'.format(self.pemfile))
+            raise ServerStartupError('server.cacert file does not exist: {0}'.format(self.pemfile))
 
         if not os.access(self.pemfile, os.R_OK):
-            raise ServerStartupError('{} is not readable by the current user.'.format(self.pemfile))
+            raise ServerStartupError('{0} is not readable by the current user.'.format(self.pemfile))
 
         if not os.access(self.cacert, os.R_OK):
-            raise ServerStartupError('{} is not readable by the current user.'.format(self.cacert))
+            raise ServerStartupError('{0} is not readable by the current user.'.format(self.cacert))
 
     def connect(self, address, family, proto, use_ssl=False):
         '''Returns a socket for a given addres, family and protocol.'''

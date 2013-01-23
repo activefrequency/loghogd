@@ -56,21 +56,21 @@ def format_connection_message(address, family, proto, use_ssl):
     }
 
     ADDR_FORMATTER = {
-        socket.AF_INET: lambda a: '{}:{}'.format(*address),
-        socket.AF_INET6: lambda a: '[{}]:{}'.format(*address),
+        socket.AF_INET: lambda a: '{0}:{1}'.format(*address),
+        socket.AF_INET6: lambda a: '[{0}]:{1}'.format(*address),
         socket.AF_UNIX: lambda a: a,
     }
 
-    return 'Listening on a {} {} socket on {}.'.format(FAM_STRS[family], PROTO_STRS[family, proto, use_ssl], ADDR_FORMATTER[family](address))
+    return 'Listening on a {0} {1} socket on {2}.'.format(FAM_STRS[family], PROTO_STRS[family, proto, use_ssl], ADDR_FORMATTER[family](address))
 
 def pretty_addr(addr):
     '''Converts a full address as returned by socket.accept() to a human-readable format.'''
 
     if len(addr) == 2:
-        return '{}:{}'.format(*addr)
+        return '{0}:{1}'.format(*addr)
 
     if len(addr) == 4:
-        return '[{}]:{}'.format(*addr[:2])
+        return '[{0}]:{1}'.format(*addr[:2])
 
 def normalize_path(filename, conf_root):
     '''Returns the absolute path to a file.

@@ -50,21 +50,21 @@ class Facility(object):
 
         if rotate == 'size':
             if not max_size:
-                raise FacilityError('Error parsing facility for {}:{}: rotation mode is "size", but no max_size is specified'.format(app_id, self.mod_str))
+                raise FacilityError('Error parsing facility for {0}:{1}: rotation mode is "size", but no max_size is specified'.format(app_id, self.mod_str))
         else:
             try:
                 croniter(rotate)
             except:
-                raise FacilityError('Error parsing facility for {}:{}: "{}" is not a valid rotation mode'.format(app_id, self.mod_str, rotate))
+                raise FacilityError('Error parsing facility for {0}:{1}: "{2}" is not a valid rotation mode'.format(app_id, self.mod_str, rotate))
 
         if not isinstance(backup_count, int) or backup_count <= 0: 
-            raise FacilityError('Error parsing facility for {}:{}: backup_count must be a positive integer'.format(app_id, self.mod_str))
+            raise FacilityError('Error parsing facility for {0}:{1}: backup_count must be a positive integer'.format(app_id, self.mod_str))
 
         if max_size and (not isinstance(max_size, int) or max_size <= 0): 
-            raise FacilityError('Error parsing facility for {}:{}: if specified, max_size must be a positive integer'.format(app_id, self.mod_str))
+            raise FacilityError('Error parsing facility for {0}:{1}: if specified, max_size must be a positive integer'.format(app_id, self.mod_str))
 
         if flush_every and (not isinstance(flush_every, int) or flush_every <= 0): 
-            raise FacilityError('Error parsing facility for {}:{}: if specified, flush_every must be a positive integer'.format(app_id, self.mod_str))
+            raise FacilityError('Error parsing facility for {0}:{1}: if specified, flush_every must be a positive integer'.format(app_id, self.mod_str))
 
         self.rotate = rotate
         self.backup_count = int(backup_count)
@@ -74,7 +74,7 @@ class Facility(object):
         self.file_per_host = file_per_host
 
     def __repr__(self):
-        return u'<{}: {}:{}>'.format(self.__class__.__name__, self.app_id, '.'.join(self.mod_id))
+        return u'<{0}: {1}:{2}>'.format(self.__class__.__name__, self.app_id, '.'.join(self.mod_id))
 
 class FacilityDB(object):
 
@@ -171,7 +171,7 @@ class FacilityDB(object):
             try:
                 root_facility = root_facilities[app_id]
             except KeyError:
-                raise FacilityError('Application {} lacks a root module. Define [{}] section in the facility config file.'.format(app_id, app_id))
+                raise FacilityError('Application {0} lacks a root module. Define [{0}] section in the facility config file.'.format(app_id, app_id))
 
             facility = self.parse_section(cp, section, root_facility=root_facility)
             db.add_facility(facility)
