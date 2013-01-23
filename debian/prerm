@@ -19,12 +19,6 @@ set -e
 
 case "$1" in
     remove|upgrade|deconfigure)
-
-        if [ -x /usr/sbin/invoke-rc.d ]; then
-            invoke-rc.d loghogd stop
-        else
-            /etc/init.d/loghogd stop
-        fi
     ;;
 
     failed-upgrade)

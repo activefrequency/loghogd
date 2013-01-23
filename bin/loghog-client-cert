@@ -58,7 +58,7 @@ openssl x509 -req -in "$client_req" -CA "$ca_cert" -CAkey "$ca_key" -CAcreateser
 cat "$client_key" >> "$client_pem"
 
 # Clean up
-rm "$client_req" "$ca_name-ca.srl" "$client_key"
+rm "$client_req" "$ca_root/$ca_name-ca.srl" "$client_key"
 
 umask $old_umask
 

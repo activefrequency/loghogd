@@ -17,16 +17,20 @@ set -e
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
+LOGHOG_USER='loghog'
 
 case "$1" in
     configure)
         update-python-modules -p loghogd.public
 
-        if [ -x /usr/sbin/invoke-rc.d ]; then
-            invoke-rc.d loghogd start
-        else
-            /etc/init.d/loghogd start
+        # Generate client cert
+        if [ ! -e /etc/loghogd/certs/loghog-ca.cert ]; then
+            cd /etc/loghogd/certs/
+            loghog-server-cert
+            chown $LOGHOG_USER /etc/loghogd/certs/*
+            cd - > /dev/null
         fi
+
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

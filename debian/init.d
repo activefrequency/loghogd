@@ -13,13 +13,14 @@
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
-DESC=LogHog Daemon              # Introduce a short description here
-NAME=loghogd             # Introduce the short server's name here
-DAEMON=/usr/bin/loghogd  # Introduce the server's location here
+DESC='LogHog Daemon'                    # Introduce a short description here
+NAME=loghogd                            # Introduce the short server's name here
+DAEMON=/usr/bin/loghogd                 # Introduce the server's location here
 CONFIG="/etc/loghogd/loghogd.conf"
 PIDFILE=/var/run/loghogd/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
-DAEMON_ARGS="--daemon --config=$CONFIG"          # Arguments to run the daemon with
+DAEMON_ARGS="--daemon --config=$CONFIG" # Arguments to run the daemon with
+STARTUP_TIMEOUT=1
 
 # Exit if the package is not installed
 [ -x $DAEMON ] || exit 0
@@ -48,6 +49,14 @@ do_start()
 	# Add code here, if necessary, that waits for the process to be ready
 	# to handle requests from services started subsequently which depend
 	# on this one.  As a last resort, sleep for some time.
+    sleep $STARTUP_TIMEOUT
+    if [ -e "$PIDFILE" ]; then
+        if ! kill -0 `cat "$PIDFILE"`; then
+            return 2
+        fi
+    else
+        return 2
+    fi
 }
 
 #
@@ -91,19 +100,24 @@ do_reload() {
 
 case "$1" in
   start)
-    [ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC " "$NAME"
+    log_daemon_msg "Starting $DESC " "$NAME"
     do_start
     case "$?" in
-		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
-		2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+		0|1)
+            log_end_msg 0
+        ;;
+		2)
+            log_end_msg 1
+            exit 1
+        ;;
 	esac
   ;;
   stop)
-	[ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
+	log_daemon_msg "Stopping $DESC" "$NAME"
 	do_stop
 	case "$?" in
-		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
-		2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+		0|1) log_end_msg 0 ;;
+		2) log_end_msg 1 ;;
 	esac
 	;;
   status)
@@ -130,13 +144,20 @@ case "$1" in
 		do_start
 		case "$?" in
 			0) log_end_msg 0 ;;
-			1) log_end_msg 1 ;; # Old process is still running
-			*) log_end_msg 1 ;; # Failed to start
+			1) # Old process is still running
+                log_end_msg 1 
+                exit 1
+            ;;
+			*) # Failed to start
+                log_end_msg 1
+                exit 1
+            ;;
 		esac
 		;;
 	  *)
 	  	# Failed to stop
 		log_end_msg 1
+        exit 1
 		;;
 	esac
 	;;
