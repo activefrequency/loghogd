@@ -16,9 +16,10 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC=LogHog Daemon              # Introduce a short description here
 NAME=loghogd             # Introduce the short server's name here
 DAEMON=/usr/bin/loghogd  # Introduce the server's location here
-DAEMON_ARGS="--daemon"          # Arguments to run the daemon with
+CONFIG="/etc/loghogd/loghogd.conf"
 PIDFILE=/var/run/loghogd/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
+DAEMON_ARGS="--daemon --config=$CONFIG"          # Arguments to run the daemon with
 
 # Exit if the package is not installed
 [ -x $DAEMON ] || exit 0

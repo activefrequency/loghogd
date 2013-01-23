@@ -20,6 +20,8 @@ set -e
 
 case "$1" in
     configure)
+        update-python-modules -p loghogd.public
+
         if [ -x /usr/sbin/invoke-rc.d ]; then
             invoke-rc.d loghogd start
         else

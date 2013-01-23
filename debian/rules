@@ -4,6 +4,7 @@
 # Mon, 21 Jan 2013 18:09:41 -0500
 
 %:
-	dh $@ --with python2 --buildsystem=python_distutils
+	dh $@
+#	dh $@ --with python2 --buildsystem=python_distutils
 
 
