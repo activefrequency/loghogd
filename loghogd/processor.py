@@ -71,16 +71,17 @@ class Processor(object):
 
             facility = self.facility_db.get_facility(msg['app_id'], msg['module'])
             if not facility:
-                return # XXX: should we raise?
+                self.log.warning("Recevied message for app {0}, but could not find corresponding facility.".format(msg['app_id']))
+                return
 
             try:
                 self.verify_signature(facility.secret, msg)
             except LogParseError as e:
-                self.log.warning('Signature verification error: %s', e)
+                self.log.warning('Signature verification error: {0}'.format(e))
 
             self.log.debug('Got message %r from %r', msg, pretty_addr(addr))
             self.writer.write(facility.app_id, facility.mod_id, msg)
         except Exception, e:
-            self.log.error('An error occured processing message: %s', msg_bytes)
+            self.log.error('An error occured processing message: {0}'.format(msg_bytes))
             self.log.exception(e)
 
