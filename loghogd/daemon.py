@@ -49,7 +49,7 @@ def daemonize():
     os.dup2(os.open(os.devnull, os.O_RDWR), sys.stderr.fileno())
 
 def write_pid(filename):
-    fd = os.open(filename, os.O_CREAT | os.O_EXCL | os.O_RDWR)
+    fd = os.open(filename, os.O_CREAT | os.O_EXCL | os.O_RDWR, 0o644)
     os.write(fd, str(os.getpid()))
     os.close(fd)
 
