@@ -129,8 +129,6 @@ def main():
         sys.stderr.flush()
         sys.exit(os.EX_CONFIG)
         
-    atexit.register(exit_handler)
-    
     if options.main.generate_config:
         print(generate_sample_config()) # XXX: this doesn't yet work properly because of groper
         sys.exit()
@@ -164,11 +162,12 @@ def main():
     if options.main.daemon:
         daemonize()
 
-    if options.main.pidfile:
-        write_pid(options.main.pidfile)
-
     if options.main.user:
         drop_privileges(options.main.user)
+
+    if options.main.pidfile:
+        write_pid(options.main.pidfile)
+        atexit.register(exit_handler)
 
     setup_logging()
 
@@ -187,7 +186,6 @@ def main():
         
         signal.signal(signal.SIGHUP, make_reload_handler(facility_db, writer))
     except Exception as e:
-        raise
         logging.getLogger().error(e)
         logging.getLogger().error('Exiting abnormally due to an error at startup.')
         sys.exit(os.EX_CONFIG)

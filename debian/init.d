@@ -15,11 +15,12 @@
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC='LogHog Daemon'                    # Introduce a short description here
 NAME=loghogd                            # Introduce the short server's name here
-DAEMON=/usr/bin/loghogd                 # Introduce the server's location here
+REAL_DAEMON=/usr/bin/loghogd
+DAEMON=/usr/bin/python                 # Introduce the server's location here
 CONFIG="/etc/loghogd/loghogd.conf"
 PIDFILE=/var/run/loghogd/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
-DAEMON_ARGS="--daemon --config=$CONFIG" # Arguments to run the daemon with
+DAEMON_ARGS="$REAL_DAEMON --daemon --config=$CONFIG" # Arguments to run the daemon with
 STARTUP_TIMEOUT=1
 
 # Exit if the package is not installed
@@ -43,6 +44,11 @@ do_start()
 	#   2 if daemon could not be started
 	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --test > /dev/null \
 		|| return 1
+
+    # If the line above did not return it means that the process isn't running
+    # so it is safe to delete this PID file (aside from obvious race conditions)
+    rm -f "$PIDFILE"
+
 	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -- \
 		$DAEMON_ARGS \
 		|| return 2
@@ -51,7 +57,7 @@ do_start()
 	# on this one.  As a last resort, sleep for some time.
     sleep $STARTUP_TIMEOUT
     if [ -e "$PIDFILE" ]; then
-        if ! kill -0 `cat "$PIDFILE"`; then
+        if ! kill -0 `cat "$PIDFILE"` > /dev/null 2>&1; then
             return 2
         fi
     else
@@ -69,19 +75,8 @@ do_stop()
 	#   1 if daemon was already stopped
 	#   2 if daemon could not be stopped
 	#   other if a failure occurred
-	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE --name $NAME
+	start-stop-daemon --stop --quiet --retry=TERM/5/KILL/1 --pidfile $PIDFILE --name `basename $DAEMON`
 	RETVAL="$?"
-	[ "$RETVAL" = 2 ] && return 2
-	# Wait for children to finish too if this is a daemon that forks
-	# and if the daemon is only ever run from this initscript.
-	# If the above conditions are not satisfied then add some other code
-	# that waits for the process to drop all resources that could be
-	# needed by services started subsequently.  A last resort is to
-	# sleep for some time.
-	start-stop-daemon --stop --quiet --oknodo --retry=0/30/KILL/5 --exec $DAEMON
-	[ "$?" = 2 ] && return 2
-	# Many daemons don't delete their pidfiles when they exit.
-	rm -f $PIDFILE
 	return "$RETVAL"
 }
 
@@ -108,7 +103,7 @@ case "$1" in
         ;;
 		2)
             log_end_msg 1
-            exit 1
+            exit 2
         ;;
 	esac
   ;;
