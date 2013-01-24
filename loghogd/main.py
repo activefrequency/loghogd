@@ -1,5 +1,5 @@
 
-from __future__ import print_function
+from __future__ import print_function, with_statement
 import signal, atexit, os, logging, logging.handlers, sys, pwd, errno
 try:
     import configparser
@@ -11,7 +11,7 @@ from writer import Writer
 from processor import Processor
 from facilities import FacilityDB, FacilityError
 from daemon import daemonize, write_pid, drop_privileges
-from util import normalize_path
+from util import normalize_path, get_file_md5
 
 from ext.groper import define_opt, options, init_options, generate_sample_config, OptionsError, usage
 
@@ -34,6 +34,8 @@ define_opt('log', 'backup_count', type=int, default=14)
 define_opt('log', 'when', default='midnight')
 define_opt('log', 'level', default='INFO')
 
+cached_config_md5 = None
+
 def shutdown(signum, server, writer):
     logger = logging.getLogger()
     logger.info('Recevied signal %d. Shutting down.', signum)
@@ -43,7 +45,14 @@ def shutdown(signum, server, writer):
 
 def reload_config(signum, facility_db, writer):
     logger = logging.getLogger()
-    logger.info('Recevied signal %d. Reloading.', signum)
+    logger.info('Recevied signal %d.', signum)
+
+    if get_file_md5(options.main.config) != cached_config_md5:
+        logger.warning('The main config file ({0}) has changed.'.format(options.main.config))
+        logger.warning('Online reloading of the config file is not supported.')
+        logger.warning('Please restart the process instead.')
+        return
+
     facility_db.reload()
     writer.reload()
     logger.info('Reload complete.')
@@ -53,6 +62,8 @@ make_shutdown_handler = lambda server, writer: lambda signum, frame: shutdown(si
 make_reload_handler = lambda facility_db, writer: lambda signum, frame: reload_config(signum, facility_db, writer)
 
 def exit_handler():
+    '''Cleanup routine. This function runs right before loghogd is about to exit.'''
+
     if options.main.pidfile:
         try:
             os.unlink(options.main.pidfile)
@@ -61,6 +72,8 @@ def exit_handler():
                 pass # No such file or directory
 
 def setup_logging():
+    '''Sets up internal logging. Run this once at startup.'''
+
     logger = logging.getLogger()
 
     handler = logging.handlers.TimedRotatingFileHandler(filename=options.log.filename, when=options.log.when, backupCount=options.log.backup_count, utc=True)
@@ -102,6 +115,10 @@ def create_dirs():
                 for x in dirs + files:
                     os.chown(os.path.join(root, x), uid, gid)
 
+def cache_config_checksum():
+    global cached_config_md5
+    cached_config_md5 = get_file_md5(options.main.config)
+
 def main():
     try:
         init_options()
@@ -141,6 +158,7 @@ def main():
     if options.main.check_config:
         sys.exit() # We are just checking the config file, so exit here.
 
+    cache_config_checksum()
     create_dirs()
 
     if options.main.daemon:

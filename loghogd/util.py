@@ -1,5 +1,5 @@
 
-import re, socket, os.path
+import re, socket, os.path, hashlib
 
 str_to_addrs = lambda s: tuple(filter(lambda x: x, map(lambda a: a.strip(), s.strip().split(','))))
 
@@ -90,4 +90,11 @@ def normalize_path(filename, conf_root):
         return filename
 
     return os.path.join(conf_root, filename)
+
+
+def get_file_md5(filename):
+    '''Returns the md5sum of a given file.'''
+
+    with open(filename, 'rb') as f:
+        return hashlib.md5(f.read()).hexdigest()
 
