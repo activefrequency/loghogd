@@ -1,13 +1,11 @@
 
 import os.path
 from ext.croniter import croniter
-from ext.groper import define_opt, options
+from ext.groper import options
 try:
     from dbm import ndbm as dbm
 except ImportError:
     import dbm
-
-define_opt('scheduler', 'db_filename', default='schedules')
 
 class Scheduler(object):
     '''A job scheduler class. This class keeps the state of the recently executed
@@ -27,10 +25,10 @@ class Scheduler(object):
 
     '''
 
-    def __init__(self, db_filename=None):
+    def __init__(self, db_filename='schedules'):
         '''Initializes the scheduler and opens the dbm file.'''
 
-        db_filename = db_filename or options.scheduler.db_filename
+        db_filename = db_filename
         db_filename = os.path.join(options.main.workdir, db_filename)
         self.db = dbm.open(db_filename, 'c', 0o600)
 

@@ -3,6 +3,14 @@ from ConfigParser import RawConfigParser
 import os.path
 
 def parse_mod_id(mod_str):
+    '''Parses a module string to a mod_id tuple.
+
+    For example 'web.requests' becomes ('root', 'web', 'requests')
+                'web' becomes ('root', 'web')
+                'root' becomes ('root',)
+                '' becomes ('root',)
+    '''
+
     mod_list = mod_str.strip().split('.')
 
     result = []
@@ -14,15 +22,21 @@ def parse_mod_id(mod_str):
     return tuple(result)
 
 def pretty_mod_id(mod_id):
+    '''Converts a mod_id tuple to a pretty module string.
+
+    This function is the opposite of parse_mod_id.
+    '''
+
     if len(mod_id) > 1:
         return '.'.join(mod_id[1:])
     else:
         return '.'.join(mod_id)
 
 class FacilityError(Exception):
-    pass
+    '''This error is thrown by this module whenever an issue is detected.'''
 
 class Facility(object):
+    '''Class which defines logging facilities.'''
 
     ROTATE_MODE_TRANSLATIONS = {
         'hourly': '0 * * * *',
@@ -77,6 +91,12 @@ class Facility(object):
         return u'<{0}: {1}:{2}>'.format(self.__class__.__name__, self.app_id, '.'.join(self.mod_id))
 
 class FacilityDB(object):
+    '''A database of logging facilities.
+
+    Typically a single instance of this class is used as a registry of the facilities.
+    It provides a way to look up a facility for a given app_id and module string
+    via the get_facility() method.
+    '''
 
     def __init__(self):
         '''Initializes an empty FacilityDB.'''

@@ -4,6 +4,13 @@ import re, socket, os.path, hashlib
 str_to_addrs = lambda s: tuple(filter(lambda x: x, map(lambda a: a.strip(), s.strip().split(','))))
 
 def parse_addrs(addrs_str, default_port):
+    '''Parses comma separated list of addresses into an iterable of normalized address dicts.
+
+    Examples of params and results are:
+        ('[::1], [::2]', 5566) => [{'host': '::1', 'port': 5566}, {'host': '::2', 'port': 5566}]
+        ('[::1]:6677, [::2]', 5566) => [{'host': '::1', 'port': 6677}, {'host': '::2', 'port': 5566}]
+    '''
+
     addrs = str_to_addrs(addrs_str)
     
     normalize = lambda a: normalize_inet_addr(a, default_port)
@@ -90,7 +97,6 @@ def normalize_path(filename, conf_root):
         return filename
 
     return os.path.join(conf_root, filename)
-
 
 def get_file_md5(filename):
     '''Returns the md5sum of a given file.'''

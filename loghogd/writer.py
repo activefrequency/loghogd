@@ -5,6 +5,10 @@ import os, os.path, datetime, time, logging, errno
 from scheduler import Scheduler
 
 class LogFile(object):
+    '''Instances of this class represent log files and their backups.
+
+    This class is able to write to the corresponding log file and rotate it.
+    '''
 
     def __init__(self, filename, scheduler, backup_count, max_size, rotate, flush_every):
         '''Initializes and opens a LogFile instance.'''
@@ -50,6 +54,8 @@ class LogFile(object):
         self.size = os.stat(self.filename).st_size
 
     def close(self):
+        '''Closes the log file.'''
+
         self.file.close()
 
     def write(self, data):
@@ -122,6 +128,11 @@ class LogFile(object):
         self.log.debug('Renamed {0} to {1}'.format(src, dst))
 
 class Writer(object):
+    '''Main writer class.
+
+    A single instance of this class is typically used to dispatch writes to
+    the appropriate LogFile instances.
+    '''
 
     def __init__(self, facility_db, log_dir):
         '''Initializes a Writer instance.

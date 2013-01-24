@@ -37,6 +37,8 @@ define_opt('log', 'level', default='INFO')
 cached_config_md5 = None
 
 def shutdown(signum, server, writer):
+    '''Gracefully shuts down LogHog.'''
+
     logger = logging.getLogger()
     logger.info('Recevied signal %d. Shutting down.', signum)
     server.close()
@@ -44,6 +46,8 @@ def shutdown(signum, server, writer):
     logger.info('Shutdown complete. Exiting.')
 
 def reload_config(signum, facility_db, writer):
+    '''Reloads process configuration if possible.'''
+
     logger = logging.getLogger()
     logger.info('Recevied signal %d.', signum)
 
@@ -116,6 +120,8 @@ def create_dirs():
                     os.chown(os.path.join(root, x), uid, gid)
 
 def cache_config_checksum():
+    '''Cached the checksum of the config file in case we receive SIGHUP.'''
+
     global cached_config_md5
     cached_config_md5 = get_file_md5(options.main.config)
 

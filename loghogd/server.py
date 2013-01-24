@@ -21,6 +21,12 @@ class ServerStartupError(Exception):
     '''Raised when the server cannot start.'''
 
 class Server(object):
+    '''Main server class.
+
+    A single instance of this class typically acts as the event loop for LogHog.
+    The main event loop is implemented in the run() method.
+    '''
+
     STREAM_SOCKET_BACKLOG = 5
     MAX_MSG_SIZE = 1024*8
 
