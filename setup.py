@@ -10,7 +10,7 @@ setup(
     description = 'Modern log storage server',
     author = 'Active Frequency',
     author_email = 'info@activefrequency.com',
-    url = 'https://github.com/activefrequency/loghog',
+    url = 'https://github.com/activefrequency/loghogd',
     license = 'Apache2',
     packages = find_packages(exclude=['ez_setup', 'examples', 'tests']),
     scripts = ['bin/loghogd', 'bin/loghog-server-cert', 'bin/loghog-client-cert'],
