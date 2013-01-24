@@ -48,3 +48,34 @@ Nearly full cron syntax is also supported:
 NOTE: cron supports a "reboot" time, but that doesn't make sense in the
 context of this application, so it is not supported.
 
+## Development
+
+If you want to do some hacking on this code, simply check out the sourcetree,
+init and update submodules, create a virtual env, and run $ setup.py develop:
+
+    git clone git://github.com/activefrequency/loghogd.git
+    git submodule init
+    git submodule update
+    mkvirtualenv --system-site-packages loghogd
+    python setup.py develop
+
+Note that you may also need to install python-dateutil using either your OS's
+package manager, or pip.
+
+We welcome pull requests, so please feel free to send them!
+
+## Testing
+
+LogHog comes with basic unit tests as well as build tests. Build tests are
+performed using Vagrant (http://vagrantup.com). To run regular unit tests,
+set up the development environment as described above; then run:
+
+    python tests/run.py
+
+If you want to run the build tests, install Vagrant, then run:
+
+    python tests/run.py --all
+
+Note that build tests will take a very long time (up to an hour the first
+time), and will download large VirtualBox images into ~/.vagrant.
+
