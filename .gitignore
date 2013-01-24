@@ -16,3 +16,5 @@ debian/loghogd.prerm.debhelper
 debian/loghogd.substvars
 debian/loghogd/
 debian/files
+
+.vagrant
