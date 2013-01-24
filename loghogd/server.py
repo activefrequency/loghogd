@@ -272,8 +272,6 @@ class Server(object):
 
         If the passed-in buf does not contain a full datagram, (None, None) is returned.'''
 
-        # XXX: should we detect incomplete datagrams preceeding complete datagrams?
-
         size, flags = struct.unpack(self.HEADER_FORMAT, buf[:self.HEADER_SIZE])
         if len(buf) >= self.HEADER_SIZE + size:
             payload = struct.unpack(self.MSG_FORMAT_PROTO % size, buf[self.HEADER_SIZE:])[0]
