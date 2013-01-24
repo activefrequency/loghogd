@@ -14,6 +14,7 @@ Vagrant::Config.run do |config|
         config.vm.box_url = "http://files.vagrantup.com/lucid32.box"
         config.vm.provision :shell, :path => "vagrant-debian-like-provision.sh"
         config.vm.base_mac = '0E1000001004'
+        config.vm.share_folder "src", "/home/vagrant/loghogd", "../../"
     end
 
     config.vm.define :precise do |precise_config|
@@ -21,6 +22,7 @@ Vagrant::Config.run do |config|
         config.vm.box_url = "http://files.vagrantup.com/precise32.box"
         config.vm.provision :shell, :path => "vagrant-debian-like-provision.sh"
         config.vm.base_mac = '0E1000001204'
+        config.vm.share_folder "src", "/home/vagrant/loghogd", "../../"
     end
 
     config.vm.define :quantal do |quantal_config|
@@ -28,6 +30,7 @@ Vagrant::Config.run do |config|
         config.vm.box_url = "http://static.aldoborrero.com/vagrant/quantal64.box"
         config.vm.provision :shell, :path => "vagrant-debian-like-provision.sh"
         config.vm.base_mac = '0E1000001210'
+        config.vm.share_folder "src", "/home/vagrant/loghogd", "../../"
     end
 
     # Debian
@@ -36,6 +39,7 @@ Vagrant::Config.run do |config|
         config.vm.box_url = "https://dl.dropbox.com/u/2289657/squeeze32-vanilla.box"
         config.vm.provision :shell, :path => "vagrant-debian-like-provision.sh"
         config.vm.base_mac = '0E2000000006'
+        config.vm.share_folder "src", "/home/vagrant/loghogd", "../../"
     end
 
     config.vm.define :wheezy do |wheezy_config|
@@ -43,6 +47,7 @@ Vagrant::Config.run do |config|
         config.vm.box_url = "https://github.com/downloads/leapcode/minimal-debian-vagrant/wheezy.box"
         config.vm.provision :shell, :path => "vagrant-debian-like-provision.sh"
         config.vm.base_mac = '0E2000000007'
+        config.vm.share_folder "src", "/home/vagrant/loghogd", "../../"
     end
 
 end
