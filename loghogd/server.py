@@ -140,7 +140,6 @@ class Server(object):
     def connect(self, address, family, proto, use_ssl=False):
         '''Returns a socket for a given addres, family and protocol.'''
 
-        self.log.info(format_connection_message(address, family, proto, use_ssl))
         sock = socket.socket(family, proto)
 
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -154,6 +153,8 @@ class Server(object):
 
         if proto == socket.SOCK_STREAM:
             sock.listen(self.STREAM_SOCKET_BACKLOG)
+        
+        self.log.info(format_connection_message(address, family, proto, use_ssl))
 
         return sock
 
