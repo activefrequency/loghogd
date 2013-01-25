@@ -1,6 +1,6 @@
 
 from __future__ import print_function
-import os, os.path, datetime, time, logging, errno
+import os, datetime, time, logging, errno
 
 from scheduler import Scheduler
 
@@ -10,13 +10,14 @@ class LogFile(object):
     This class is able to write to the corresponding log file and rotate it.
     '''
 
-    def __init__(self, filename, scheduler, backup_count, max_size, rotate, flush_every):
+    def __init__(self, filename, scheduler, compressed_extension, backup_count, max_size, rotate, flush_every):
         '''Initializes and opens a LogFile instance.'''
         
         self.log = logging.getLogger('writer.log_file') # internal logger
 
         self.filename = filename
         self.scheduler = scheduler
+        self.compressed_extension = compressed_extension
         self.backup_count = backup_count
         self.max_size = max_size
         self.rotate = rotate
@@ -31,7 +32,6 @@ class LogFile(object):
     def open(self):
         '''Opens a file and creates the necessary records in the dbm database.'''
 
-        # Move this elsewhere?
         try:
             os.makedirs(os.path.dirname(self.filename))
         except OSError as e:
@@ -88,31 +88,40 @@ class LogFile(object):
     def do_rotate(self):
         '''Performs the file rotation.'''
 
-        filename = self.filename
-        backup_count = self.backup_count
-
         self.log.info('Rotating {0} based on "{1}"'.format(self.filename, self.rotate))
         
         try:
             # Close the file before renaming it
             self.close()
 
-            if self.rotate == 'size':
-                # Rotate by size
-                for _i in range(backup_count - 1):
-                    i = backup_count - _i - 1
-                    self._rename('{0}.{1}'.format(filename, i), '{0}.{1}'.format(filename, i + 1))
+            last_rotation_dt = datetime.datetime.fromtimestamp(self.scheduler.get_last_execution(self.filename))
+            new_name = '{0}.{1}'.format(self.filename, last_rotation_dt.strftime('%Y-%m-%d-%H-%M-%S-%f'))
+            self._rename(self.filename, new_name)
 
-                self._rename(filename, '{0}.1'.format(filename))
+            self.remove_old_backups()
 
-            else:
-                # Rotate on schedule
-                last_rotation_dt = datetime.datetime.fromtimestamp(self.scheduler.get_last_execution(filename))
-                self._rename(filename, '{0}.{1}'.format(filename, last_rotation_dt.strftime('%Y-%m-%d-%H-%M-%S')))
-
+            return new_name
         finally:
             # Make sure that no matter what we try to open the file
             self.open()
+
+    def remove_old_backups(self):
+        '''Removes old backups after a file rotation.'''
+
+        prefix = os.path.basename(self.filename)
+        all_files = []
+        for root, dirs, files in os.walk(os.path.dirname(self.filename)):
+            for filename in files:
+                if filename.startswith(prefix):
+                    filename = os.path.join(root, filename)
+                    all_files.append(filename)
+
+        all_files.sort()
+
+        to_remove = all_files[:-self.backup_count]
+
+        for filename in to_remove:
+            os.unlink(filename)
 
     def _rename(self, src, dst):
         '''Renames src to dst if src exists.'''
@@ -134,7 +143,7 @@ class Writer(object):
     the appropriate LogFile instances.
     '''
 
-    def __init__(self, facility_db, log_dir):
+    def __init__(self, facility_db, compressor, log_dir):
         '''Initializes a Writer instance.
         
         Take care not to initialize multiple writer instances for the same files.'''
@@ -146,6 +155,8 @@ class Writer(object):
 
         self.scheduler = Scheduler()
 
+        self.compressor = compressor
+
         self.log = logging.getLogger('writer') # internal logger
 
     def write(self, app_id, mod_id, msg):
@@ -156,7 +167,8 @@ class Writer(object):
         log_file = self.get_file(msg['hostname'], facility)
 
         if log_file.should_rotate():
-            log_file.do_rotate()
+            rotated_filename = log_file.do_rotate()
+            self.compressor.compress(rotated_filename)
 
         s = u'{0!s} - {1!s} - {2!s}\n'.format(datetime.datetime.now(), msg['hostname'], msg['body']).encode('utf8')
 
@@ -184,6 +196,7 @@ class Writer(object):
             self.files[filename] = LogFile(
                 filename=filename,
                 scheduler=self.scheduler,
+                compressed_extension=self.compressor.extension,
                 backup_count=facility.backup_count,
                 max_size=facility.max_size,
                 rotate=facility.rotate,

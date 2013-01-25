@@ -10,6 +10,7 @@ from server import Server
 from writer import Writer
 from processor import Processor
 from facilities import FacilityDB, FacilityError
+from compressor import Compressor
 from daemon import daemonize, write_pid, drop_privileges
 from util import normalize_path, get_file_md5
 
@@ -36,13 +37,14 @@ define_opt('log', 'level', default='INFO')
 
 cached_config_md5 = None
 
-def shutdown(signum, server, writer):
+def shutdown(signum, server, writer, compressor):
     '''Gracefully shuts down LogHog.'''
 
     logger = logging.getLogger()
     logger.info('Recevied signal %d. Shutting down.', signum)
     server.close()
     writer.close()
+    compressor.shutdown()
     logger.info('Shutdown complete. Exiting.')
 
 def reload_config(signum, facility_db, writer):
@@ -62,7 +64,7 @@ def reload_config(signum, facility_db, writer):
     logger.info('Reload complete.')
 
 # These simply change the function signature, creating necessary closures
-make_shutdown_handler = lambda server, writer: lambda signum, frame: shutdown(signum, server, writer)
+make_shutdown_handler = lambda server, writer, compressor: lambda signum, frame: shutdown(signum, server, writer, compressor)
 make_reload_handler = lambda facility_db, writer: lambda signum, frame: reload_config(signum, facility_db, writer)
 
 def exit_handler():
@@ -180,12 +182,15 @@ def main():
     try:
         logging.getLogger().info("Starting loghogd.")
 
-        writer = Writer(facility_db, options.main.logdir)
+        compressor = Compressor()
+        compressor.find_uncompressed(options.main.logdir, r'.+\.log\..+')
+
+        writer = Writer(facility_db, compressor, options.main.logdir)
         processor = Processor(facility_db, writer)
 
         server = Server(processor.on_message, conf_root)
 
-        signal_handler = make_shutdown_handler(server, writer)
+        signal_handler = make_shutdown_handler(server, writer, compressor)
 
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
@@ -197,10 +202,12 @@ def main():
         sys.exit(os.EX_CONFIG)
 
     try:
+        compressor.start()
         server.run()
     except Exception as e:
         logging.getLogger().exception(e)
         logging.getLogger().error('Exiting abnormally due to an error at runtime.')
+        shutdown(None, server, writer, compressor)
         sys.exit(os.EX_SOFTWARE)
 
 if __name__ == '__main__':
