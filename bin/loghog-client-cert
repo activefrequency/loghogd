@@ -3,7 +3,11 @@
 set -e
 set -u
 
-DEFAULT_CA_ROOT=`readlink -f ./`
+IFS=":"
+
+CURDIR=`readlink -f ./`
+CA_LOCATIONS="$CURDIR:/etc/loghogd:/etc/loghogd/certs:/usr/local/etc/loghogd:/usr/local/etc/loghogd'"
+
 DEFAULT_CA_DOMAIN='loghog'
 
 usage() {
@@ -25,8 +29,21 @@ fi
 
 domain="$1"
 
-[ $# -lt 2 ] && ca_root=$DEFAULT_CA_ROOT || ca_root="$2"
-[ $# -lt 3 ] && ca_name=$DEFAULT_CA_DOMAIN || ca_name="$3"
+[ $# -lt 2 ] && ca_root="$CURDIR" || ca_root="$2"
+[ $# -lt 3 ] && ca_name="$DEFAULT_CA_DOMAIN" || ca_name="$3"
+
+ca_root=`echo "$ca_root" | sed 's/\/$//'`
+
+if [ $# -gt 1 ]; then
+    ca_root="$2"
+else
+    for d in $CA_LOCATIONS; do
+        if [ -e "$d/$ca_name-ca.key" ]; then
+            ca_root="$d"
+            break
+        fi
+    done
+fi
 
 old_umask=`umask`
 umask 0066
@@ -37,6 +54,10 @@ client_pem="$domain.pem"
 
 ca_key="$ca_root/$ca_name-ca.key"
 ca_cert="$ca_root/$ca_name-ca.cert"
+
+echo "Using CA key at: $ca_key"
+echo "Using CA cert at: $ca_cert"
+echo
 
 if [ ! -e $ca_key ] || [ ! -e $ca_cert ]; then
     [ ! -e $ca_key ] && echo "Error! File does not exist: $ca_key" >&2
@@ -58,7 +79,12 @@ openssl x509 -req -in "$client_req" -CA "$ca_cert" -CAkey "$ca_key" -CAcreateser
 cat "$client_key" >> "$client_pem"
 
 # Clean up
-rm "$client_req" "$ca_root/$ca_name-ca.srl" "$client_key"
+rm "$client_req" "$client_key"
+
+# If we are doing this with SUDO, chown the user
+if env | grep '^SUDO_USER=' > /dev/null 2>&1; then
+    chown $SUDO_USER:$SUDO_USER "$client_pem"
+fi
 
 umask $old_umask
 
