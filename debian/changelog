@@ -1,8 +1,14 @@
+loghogd (3) lucid; urgency=low
+
+  * Initial public release.
+
+ -- Igor Partola <igor@activefrequency.com>  Fri, 25 Jan 2013 18:07:28 -0500
+
 loghogd (2) lucid; urgency=low
 
-  * Converting release to precise.
+  * Converting release to lucid.
 
- -- Igor Partola <igor@activefrequency.com>  Mon, 22 Jan 2013 16:07:28 -0500
+ -- Igor Partola <igor@activefrequency.com>  Tue, 22 Jan 2013 16:07:28 -0500
 
 loghogd (1) lucid; urgency=low
 
