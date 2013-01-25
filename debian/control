@@ -10,7 +10,9 @@ Vcs-Browser: https://github.com/activefrequency/loghog
 
 Package: loghogd
 Architecture: all
-Depends: ${misc:Depends}, python (>= 2.6.5), python (<< 2.8), python-support (>= 0.90), python-dateutil, coreutils (>= 7.4), openssl
+Depends: ${misc:Depends}, python (>= 2.6.5), python (<< 2.8), python-support (>= 0.90), python-dateutil, coreutils (>= 7.4), openssl, gzip
+Recommends: xz-utils
+Suggests: bzip2
 X-Python-Version: >= 2.6
 Description: Modern log storage/management server
  A modern log storage/management framework.
