@@ -14,7 +14,7 @@ suffixes = ['_test.py']
 if len(sys.argv) > 1 and sys.argv[1].strip() == '--all':
     try:
         devnull = open(os.devnull, 'wb')
-        status = subprocess.call('vagrant', stdout=devnull, stderr=devnull)
+        subprocess.call('vagrant', stdout=devnull, stderr=devnull)
     except OSError as e:
         if e.errno == errno.ENOENT:
             print('ERROR: You requested build tests to be run, but vagrant is not installed!')
