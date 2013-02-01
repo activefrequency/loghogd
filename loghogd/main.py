@@ -40,12 +40,11 @@ cached_config_md5 = None
 def shutdown(signum, server, writer, compressor):
     '''Gracefully shuts down LogHog.'''
 
-    logger = logging.getLogger()
-    logger.info('Recevied signal %d. Shutting down.', signum)
-    server.close()
+    if signum:
+        logging.getLogger().info('Recevied signal {}. Shutting down.'.format(signum))
+    server.shutdown()
     writer.close()
     compressor.shutdown()
-    logger.info('Shutdown complete. Exiting.')
 
 def reload_config(signum, facility_db, writer):
     '''Reloads process configuration if possible.'''
@@ -209,6 +208,8 @@ def main():
         logging.getLogger().error('Exiting abnormally due to an error at runtime.')
         shutdown(None, server, writer, compressor)
         sys.exit(os.EX_SOFTWARE)
+    
+    logging.getLogger().info('Shutdown complete. Exiting.')
 
 if __name__ == '__main__':
     main()

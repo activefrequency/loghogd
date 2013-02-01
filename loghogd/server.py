@@ -1,4 +1,4 @@
-import socket, select, struct, zlib, ssl, logging, os
+import socket, select, struct, zlib, ssl, logging, os, time
 from ext.groper import define_opt, options
 
 from util import parse_addrs, format_connection_message, normalize_path
@@ -26,6 +26,8 @@ class Server(object):
     A single instance of this class typically acts as the event loop for LogHog.
     The main event loop is implemented in the run() method.
     '''
+    
+    SHUTDOWN_TIMEOUT = 0.25 # small timeout between socket.shutdown() and socket.close()
 
     STREAM_SOCKET_BACKLOG = 5
     MAX_MSG_SIZE = 1024*8
@@ -171,9 +173,7 @@ class Server(object):
             try:
                 r, w, e = select.select(self.all_socks, [], self.all_socks)
             except Exception as exc:
-                if self.closed:
-                    break
-                elif isinstance(exc, select.error) and exc.args[0] == 4:
+                if isinstance(exc, select.error) and exc.args[0] == 4:
                     continue # Got signal, probably HUP
                 else:
                     raise
@@ -208,6 +208,10 @@ class Server(object):
 
                     if not data:
                         self.disconnect_client_stream(sock)
+
+            if self.closed:
+                self.close()
+                break
 
     def connect_client_stream(self, sock, addr, use_ssl):
         '''Adds a new socket to the list of stream sockets.'''
@@ -280,7 +284,7 @@ class Server(object):
 
         size, flags = struct.unpack(self.HEADER_FORMAT, buf[:self.HEADER_SIZE])
         if len(buf) >= self.HEADER_SIZE + size:
-            payload = struct.unpack(self.MSG_FORMAT_PROTO % size, buf[self.HEADER_SIZE:])[0]
+            payload = struct.unpack(self.MSG_FORMAT_PROTO % size, buf[self.HEADER_SIZE:size+self.HEADER_SIZE])[0]
             buf = buf[self.HEADER_SIZE + size:]
 
             if flags & self._FLAGS_GZIP:
@@ -291,12 +295,18 @@ class Server(object):
             return None, None
 
     def close(self):
-        '''Closes all open sockets.'''
+        for sock in self.client_stream_socks:
+            sock.shutdown(socket.SHUT_RDWR)
 
-        # XXX: this does not allow for re-loading the config file
+        time.sleep(self.SHUTDOWN_TIMEOUT)
 
         for sock in self.all_socks:
             sock.close()
-            
+
+
+    def shutdown(self):
+        '''Notifies the server of a shutdown condition.'''
+
         self.closed = True
+
 

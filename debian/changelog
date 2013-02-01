@@ -1,3 +1,27 @@
+loghogd (7) quantal; urgency=high
+
+  * Critical bug fix: buffer overfill caused exception in the server module.
+
+ -- Igor Partola <igor@activefrequency.com>  Fri, 01 Feb 2013 15:36:32 -0500
+
+loghogd (6) quantal; urgency=low
+
+  * Repackaged for Precise.
+
+ -- Igor Partola <igor@activefrequency.com>  Sat, 26 Jan 2013 10:46:00 -0500
+
+loghogd (5) precise; urgency=low
+
+  * Repackaged for Precise.
+
+ -- Igor Partola <igor@activefrequency.com>  Sat, 26 Jan 2013 10:43:27 -0500
+
+loghogd (4) oneiric; urgency=low
+
+  * Repackaged for Oneiric.
+
+ -- Igor Partola <igor@activefrequency.com>  Sat, 26 Jan 2013 10:42:04 -0500
+
 loghogd (3) lucid; urgency=low
 
   * Initial public release.
