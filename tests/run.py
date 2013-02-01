@@ -5,7 +5,7 @@ import sys, os, unittest, subprocess, errno
 curdir = os.path.abspath(os.path.dirname(__file__))
 src = os.path.join(os.path.dirname(curdir), 'loghogd')
 
-sys.path = [src] + sys.path
+sys.path = [curdir, src] + sys.path
 
 suites = []
 
@@ -42,9 +42,11 @@ for _, _, files in os.walk(curdir):
         for suf in suffixes:
             if filename.endswith(suf):
                 testmodule = __import__(filename[:-3])
+                
                 suites += unittest.defaultTestLoader.loadTestsFromModule(testmodule)
                 break
 
-for suite in suites:
-    unittest.TextTestRunner(verbosity=2).run(suite)
+tests_all = unittest.TestSuite(suites)
+if __name__ == '__main__':
+    unittest.TextTestRunner(verbosity=2).run(tests_all)
 

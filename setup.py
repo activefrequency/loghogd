@@ -12,6 +12,7 @@ setup(
     author_email = 'info@activefrequency.com',
     url = 'https://github.com/activefrequency/loghogd',
     license = 'Apache2',
+    test_suite = 'tests.tests_all',
     packages = find_packages(exclude=['ez_setup', 'examples', 'tests']),
     scripts = ['bin/loghogd', 'bin/loghog-server-cert', 'bin/loghog-client-cert'],
     classifiers=[
