@@ -143,6 +143,8 @@ class Writer(object):
     the appropriate LogFile instances.
     '''
 
+    LOG_LINE_PROTO = '{0!s} - {1!s} - {2!s}\n'.decode('utf-8')
+
     def __init__(self, facility_db, compressor, log_dir):
         '''Initializes a Writer instance.
         
@@ -169,8 +171,8 @@ class Writer(object):
         if log_file.should_rotate():
             rotated_filename = log_file.do_rotate()
             self.compressor.compress(rotated_filename)
-
-        s = u'{0!s} - {1!s} - {2!s}\n'.format(datetime.datetime.now(), msg['hostname'], msg['body']).encode('utf8')
+            
+        s = self.LOG_LINE_PROTO.format(datetime.datetime.now(), msg['hostname'], msg['body']).encode('utf8')
 
         log_file.write(s)
 

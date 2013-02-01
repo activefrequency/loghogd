@@ -1,4 +1,4 @@
-loghogd (8) lucid; urgency=high
+loghogd (8.1210) quantal; urgency=high
 
   * Critical bug fix: preventing getting stuck on select() forever at
   shutdown.

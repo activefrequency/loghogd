@@ -1,7 +1,7 @@
 
 import re, socket, os.path, hashlib
 
-str_to_addrs = lambda s: tuple(filter(lambda x: x, map(lambda a: a.strip(), s.strip().split(','))))
+str_to_addrs = lambda s: tuple([x for x in [a.strip() for a in s.strip().split(',')] if x])
 
 def parse_addrs(addrs_str, default_port):
     '''Parses comma separated list of addresses into an iterable of normalized address dicts.

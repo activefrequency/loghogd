@@ -29,7 +29,7 @@ class FacilitiesTest(unittest.TestCase):
         try:
             self.processor.verify_signature(secret, msg)
         except LogParseError as e:
-            self.assertTrue(False, 'verify_signature() raised an error: {}'.format(e))
+            self.assertTrue(False, 'verify_signature() raised an error: {0}'.format(e))
 
     def test_verify_signature_2(self):
         msg = {
@@ -61,7 +61,7 @@ class FacilitiesTest(unittest.TestCase):
         try:
             self.processor.verify_signature(secret, msg)
         except LogParseError as e:
-            self.assertTrue(False, 'verify_signature() raised an error: {}'.format(e))
+            self.assertTrue(False, 'verify_signature() raised an error: {0}'.format(e))
 
     def test_parse_message_1(self):
         msg = {
@@ -83,7 +83,7 @@ class FacilitiesTest(unittest.TestCase):
         try:
             parsed = self.processor.parse_message(msg_str)
         except LogParseError as e:
-            self.assertTrue(False, 'parse_message() raised an error: {}'.format(e))
+            self.assertTrue(False, 'parse_message() raised an error: {0}'.format(e))
 
         for key, val in msg.iteritems():
             self.assertEqual(val, parsed[key])

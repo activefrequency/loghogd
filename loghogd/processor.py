@@ -56,7 +56,7 @@ class Processor(object):
 
         try:
             msg = json.loads(data)
-        except ValueError, e:
+        except ValueError as e:
             raise LogParseError('Message payload is not valid JSON: %s' % e, data)
 
         self.validate_msg(msg)
@@ -81,7 +81,7 @@ class Processor(object):
 
             self.log.debug('Got message %r from %r', msg, pretty_addr(addr))
             self.writer.write(facility.app_id, facility.mod_id, msg)
-        except Exception, e:
+        except Exception as e:
             self.log.error('An error occured processing message: {0}'.format(msg_bytes))
             self.log.exception(e)
 

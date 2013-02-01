@@ -24,7 +24,7 @@ def daemonize():
 
     try:
         os.umask(0o22)
-    except Exception, e:
+    except Exception as e:
         raise Exception("Unable to change file creation mask: %s" % e)
     
     os.chdir('/')
@@ -34,7 +34,7 @@ def daemonize():
         pid = os.fork()
         if pid > 0:
             os._exit(0)
-    except OSError, e:
+    except OSError as e:
         raise Exception("Error on first fork: [%d] %s" % (e.errno, e.strerr,))
     
     os.setsid()
@@ -44,7 +44,7 @@ def daemonize():
         pid = os.fork()
         if pid > 0:
             os._exit(0)
-    except OSError, e:
+    except OSError as e:
         raise Exception("Error on second fork: [%d] %s" % (e.errno, e.strerr,))
     
     close_open_files()

@@ -88,7 +88,7 @@ class Facility(object):
         self.file_per_host = file_per_host
 
     def __repr__(self):
-        return u'<{0}: {1}:{2}>'.format(self.__class__.__name__, self.app_id, '.'.join(self.mod_id))
+        return '<{0}: {1}:{2}>'.format(self.__class__.__name__, self.app_id, '.'.join(self.mod_id))
 
 class FacilityDB(object):
     '''A database of logging facilities.
