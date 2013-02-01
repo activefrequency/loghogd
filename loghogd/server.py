@@ -78,6 +78,8 @@ class Server(object):
 
         self.client_socket_addrs = {}
 
+        self.select_timeout = None # Set on shutdown to prevent infinite wait
+
         self.pemfile = normalize_path(pemfile if pemfile is not None else options.server.pemfile, conf_root)
         self.cacert = normalize_path(cacert if cacert is not None else options.server.cacert, conf_root)
 
@@ -171,16 +173,15 @@ class Server(object):
 
         while True:
             try:
-                r, w, e = select.select(self.all_socks, [], self.all_socks)
+                if self.select_timeout:
+                    r, w, _ = select.select(self.all_socks, [], [], self.select_timeout)
+                else:
+                    r, w, _ = select.select(self.all_socks, [], [])
             except Exception as exc:
                 if isinstance(exc, select.error) and exc.args[0] == 4:
                     continue # Got signal, probably HUP
                 else:
                     raise
-
-            for sock in e:
-                # Disconnect error streams
-                self.disconnect_client_stream(sock)
 
             for sock in r:
                 if sock in self.dgram_socks:
@@ -298,15 +299,16 @@ class Server(object):
         for sock in self.client_stream_socks:
             sock.shutdown(socket.SHUT_RDWR)
 
-        time.sleep(self.SHUTDOWN_TIMEOUT)
+        if self.client_stream_socks:
+            time.sleep(self.SHUTDOWN_TIMEOUT)
 
         for sock in self.all_socks:
             sock.close()
-
 
     def shutdown(self):
         '''Notifies the server of a shutdown condition.'''
 
         self.closed = True
+        self.select_timeout = self.SHUTDOWN_TIMEOUT
 
 

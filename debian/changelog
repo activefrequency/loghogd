@@ -1,4 +1,11 @@
-loghogd (7) quantal; urgency=high
+loghogd (8) lucid; urgency=high
+
+  * Critical bug fix: preventing getting stuck on select() forever at
+  shutdown.
+
+ -- Igor Partola <igor@activefrequency.com>  Fri, 01 Feb 2013 16:32:18 -0500
+
+loghogd (7) lucid; urgency=high
 
   * Critical bug fix: buffer overfill caused exception in the server module.
 
