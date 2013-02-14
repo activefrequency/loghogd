@@ -47,6 +47,9 @@ https://github.com/activefrequency/loghog-php
     sudo apt-get update
     sudo apt-get install loghogd
 
+Note: if you are running an older (e.g.: 10.04) release of Ubuntu, you may need to first install
+the *python-software-properties* package to get the `add-apt-repository` command.
+
 If you are using Debian, run the following:
 
     echo 'deb http://ppa.launchpad.net/activefrequency/ppa/ubuntu lucid main' | sudo tee -a /etc/apt/sources.list.d/99-loghogd.list
