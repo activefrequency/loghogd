@@ -1,4 +1,3 @@
-
 # LogHog
 
 LogHog is a general purpose log storage/management system. Its main goal is to 
@@ -50,8 +49,8 @@ https://github.com/activefrequency/loghog-php
 
 If you are using Debian, run the following:
 
-    echo 'deb http://ppa.launchpad.net/activefrequency/ppa/ubuntu lucid main' | sudo tee -a /etc/apt/sources.list.d/99-loghogd
-    echo 'deb-src http://ppa.launchpad.net/activefrequency/ppa/ubuntu lucid main' | sudo tee -a /etc/apt/sources.list.d/99-loghogd
+    echo 'deb http://ppa.launchpad.net/activefrequency/ppa/ubuntu lucid main' | sudo tee -a /etc/apt/sources.list.d/99-loghogd.list
+    echo 'deb-src http://ppa.launchpad.net/activefrequency/ppa/ubuntu lucid main' | sudo tee -a /etc/apt/sources.list.d/99-loghogd.list
     
     gpg --keyserver hkp://keyserver.ubuntu.com/ --recv-keys F96CE604
     gpg -a --export F96CE604 | sudo apt-key add -
