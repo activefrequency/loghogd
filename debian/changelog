@@ -2,6 +2,7 @@ loghogd (0.9) quantal; urgency=high
 
   * Bug fix: init script did not trigger proper facilities.conf reload
   * Updated sample config file with more sane defaults
+  * Switching to upstream version of croniter
 
  -- Igor Partola <igor@activefrequency.com>  Tue, 26 Mar 2013 15:42:11 -0400
 
