@@ -75,7 +75,7 @@ do_stop()
 	#   1 if daemon was already stopped
 	#   2 if daemon could not be stopped
 	#   other if a failure occurred
-	start-stop-daemon --stop --quiet --retry=TERM/5/KILL/1 --pidfile $PIDFILE --name `basename $DAEMON`
+	start-stop-daemon --stop --quiet --retry=TERM/5/KILL/1 --pidfile $PIDFILE --name `basename "$DAEMON"`
 	RETVAL="$?"
 	return "$RETVAL"
 }
@@ -89,7 +89,7 @@ do_reload() {
 	# restarting (for example, when it is sent a SIGHUP),
 	# then implement that here.
 	#
-	start-stop-daemon --stop --signal 1 --quiet --pidfile $PIDFILE --name $NAME
+	start-stop-daemon --stop --signal 1 --quiet --pidfile $PIDFILE --name `basename "$DAEMON"` 
 	return 0
 }
 
