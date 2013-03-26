@@ -64,7 +64,7 @@ If you are using Debian, run the following:
 **Step 2**: List your application in the LogHog logging facilities. Put the following in */etc/loghogd/facilities.conf*:
 
     [my-first-app]
-    rotate = 0 0 * * *
+    rotate = daily
     backup_count = 14
 
 And reload loghog:
@@ -91,6 +91,59 @@ And reload loghog:
     logger.info('Hello world!')
 
 Start your app and look at /var/log/loghogd/my-first-app/ to see your application's log."
+
+**Step 4: Django**: If you want to use LogHog with your Django application, add
+the following code to your settings.py:
+
+    LOGHOG_APP_NAME = 'my-first-app'
+
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': True,
+        'formatters': {
+            'simple': {
+                'format': '%(levelname)s - %(message)s'
+            },
+        },
+        'handlers': {
+            'root':{
+                'level':'DEBUG',
+                'class':'loghog.LoghogHandler',
+                'app_name': LOGHOG_APP_NAME,
+                'formatter': 'simple',
+            },
+        },
+        'loggers': {
+            'root': {
+                'handlers':['root', ],
+                'propagate': False,
+                'level': 'INFO',
+            },
+            'django': {
+                'handlers':['root', ],
+                'propagate': False,
+                'level': 'INFO',
+            },
+            'django.request': {
+                'handlers': ['root', ],
+                'level': 'INFO',
+                'propagate': False,
+            },
+        }
+    }
+
+Now, all default logging from within Django will be sent to the LogHog server.
+If you want to send log messages from within your code, you can:
+
+    import logging
+    logger = logging.getLogger('django')
+
+    def view(request):
+        # ...
+        logger.info('Hello world')
+        # ...
+        return response
+
 
 ## Configuration
 
