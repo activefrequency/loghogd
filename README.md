@@ -71,7 +71,7 @@ And reload loghog:
 
     sudo /etc/init.d/loghogd reload
 
-**Step 3**: Install LogHog Python Client (this codebase):
+**Step 3**: Install LogHog Python Client:
 
     pip install loghog
 
