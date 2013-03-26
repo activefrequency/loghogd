@@ -1,47 +1,54 @@
-loghogd (8.1210) quantal; urgency=high
+loghogd (0.9) quantal; urgency=high
+
+  * Bug fix: init script did not trigger proper facilities.conf reload
+  * Updated sample config file with more sane defaults
+
+ -- Igor Partola <igor@activefrequency.com>  Tue, 26 Mar 2013 15:42:11 -0400
+
+loghogd (0.8) quantal; urgency=high
 
   * Critical bug fix: preventing getting stuck on select() forever at
   shutdown.
 
  -- Igor Partola <igor@activefrequency.com>  Fri, 01 Feb 2013 16:32:18 -0500
 
-loghogd (7) lucid; urgency=high
+loghogd (0.7) lucid; urgency=high
 
   * Critical bug fix: buffer overfill caused exception in the server module.
 
  -- Igor Partola <igor@activefrequency.com>  Fri, 01 Feb 2013 15:36:32 -0500
 
-loghogd (6) quantal; urgency=low
+loghogd (0.6) quantal; urgency=low
 
   * Repackaged for Precise.
 
  -- Igor Partola <igor@activefrequency.com>  Sat, 26 Jan 2013 10:46:00 -0500
 
-loghogd (5) precise; urgency=low
+loghogd (0.5) precise; urgency=low
 
   * Repackaged for Precise.
 
  -- Igor Partola <igor@activefrequency.com>  Sat, 26 Jan 2013 10:43:27 -0500
 
-loghogd (4) oneiric; urgency=low
+loghogd (0.4) oneiric; urgency=low
 
   * Repackaged for Oneiric.
 
  -- Igor Partola <igor@activefrequency.com>  Sat, 26 Jan 2013 10:42:04 -0500
 
-loghogd (3) lucid; urgency=low
+loghogd (0.3) lucid; urgency=low
 
   * Initial public release.
 
  -- Igor Partola <igor@activefrequency.com>  Fri, 25 Jan 2013 18:07:28 -0500
 
-loghogd (2) lucid; urgency=low
+loghogd (0.2) lucid; urgency=low
 
   * Converting release to lucid.
 
  -- Igor Partola <igor@activefrequency.com>  Tue, 22 Jan 2013 16:07:28 -0500
 
-loghogd (1) lucid; urgency=low
+loghogd (0.1) lucid; urgency=low
 
   * source package automatically created by stdeb 0.6.0+git
 
