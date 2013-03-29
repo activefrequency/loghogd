@@ -71,7 +71,7 @@ And reload loghog:
 
     sudo /etc/init.d/loghogd reload
 
-**Step 3**: Install LogHog Python Client (this codebase):
+**Step 3**: Install LogHog Python Client:
 
     pip install loghog
 
@@ -90,7 +90,7 @@ And reload loghog:
 
     logger.info('Hello world!')
 
-Start your app and look at /var/log/loghogd/my-first-app/ to see your application's log."
+Start your app and look at /var/log/loghogd/my-first-app/ to see your application's log.
 
 **Step 4: Django**: If you want to use LogHog with your Django application, add
 the following code to your settings.py:
