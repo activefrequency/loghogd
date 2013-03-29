@@ -215,9 +215,17 @@ LogHog deleted the logs it thought were too old, or crashed your server by
 not rotating them frequently enough.
 
 The *rotate* defines when the log is rotated. This can be done based on a schedule
-(e.g.: hourly) or size (e.g.: when it reaches 10 MB). If it is based on size,
-you must also specify the *max\_size* (in bytes). See Specifying File Rotation Frequency
-section for more details on how to set the schedule.
+(e.g.: hourly) and/or size (e.g.: when it reaches 10 MB). If it is based on size,
+you must also specify the *max\_size* (in bytes). Otherwisze *max\_size* is optional,
+but will be taken into account when testing for whether the file should be rotated.
+In other words, if you want the log file to be rotated daily or when it reaches
+100 megabytes, LogHog will rotate it at 8am when the maximum size is reached,
+as well as at midnight.
+
+Combining *max\_size* with a schedule-based file rotation will help reduce the chance
+of your server running out of disk space.
+
+See Specifying File Rotation Frequency section for more details on how to set the schedule.
 
 The backup\_count option simply says how many backups of the given file to keep.
 

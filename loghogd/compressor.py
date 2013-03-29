@@ -1,5 +1,5 @@
 
-import threading, logging, os, errno, re
+import threading, logging, os, errno, re, gzip
 from subprocess import Popen, PIPE
 from collections import deque
 try:
@@ -10,10 +10,12 @@ except ImportError:
 from ext.groper import define_opt, options
 
 FALLBACK_COMPRESSOR = 'gzip'
+STREAM_COMPRESSOR = 'gzip'
 
 # Try to use xz by default. It provides the best compression/speed ratio
 define_opt('compressor', 'format', default='xz')
 define_opt('compressor', 'level', type=int, default=6)
+define_opt('compressor', 'compress_on_write', type=bool)
 
 class CompressorStartupError(Exception):
     '''Raised by Compressor instances if a misconfigruation is detected.'''
@@ -56,6 +58,12 @@ class Compressor(object):
         if not (0 <= self.compress_level <= 9):
             raise CompressorStartupError('The compression level must be between 0 and 9 incluse. It is set to {0}.'.format(self.compress_level))
 
+        if options.compressor.compress_on_write:
+            # Note: this command will not actually be used. Instead
+            # we will wrap the file object in the compressor of the appropriate type
+            self.compress_cmd = STREAM_COMPRESSOR
+            self.log.info('Streaming compression enabled using {0}'.format(STREAM_COMPRESSOR))
+
         self.extension = self.COMPRESS_EXTS[self.compress_cmd]
 
     def start(self):
@@ -81,7 +89,8 @@ class Compressor(object):
 
         # Putting None on the queue means "shut down now"
         if filename:
-            self.queue.put(filename)
+            if not options.compressor.compress_on_write:
+                self.queue.put(filename)
 
     def call(self, cmd, stdout=PIPE, stderr=PIPE):
         '''A wrapper around Popen. Returns (status, stdout, stderr).'''
@@ -172,4 +181,43 @@ class Compressor(object):
                 raise
         finally:
             devnull.close()
+
+    def wrap_fileobj(self, f, filename):
+        '''If compress_on_write is enabled, wrap the file object into a GzipFile.
+        
+        If compress_on_write is disabled, return the original file object.
+
+        param f : file object
+            the file object to wrap
+        param filename : string
+            basename of the file. This goes into the gzip metadata
+        '''
+
+        if options.compressor.compress_on_write:
+            return gzip.GzipFile(mode='ab', fileobj=f, compresslevel=options.compressor.level, filename=filename)
+
+        return f
+
+    def wrap_filename(self, filename):
+        '''If compress_on_write is enabled, return a filename + .gz extension.
+        
+        If compress_on_write is disabled, return the original filename.
+        '''
+
+        if options.compressor.compress_on_write:
+            return filename + self.extension 
+
+        return filename
+
+    def unwrap_filename(self, filename):
+        '''If compress_on_write is enabled, remove the .gz extension.
+        
+        If compress_on_write is disabled, return the original filename.
+        '''
+
+        if options.compressor.compress_on_write:
+            if filename.endswith(self.extension):
+                return filename[:-len(self.extension)]
+
+        return filename
 

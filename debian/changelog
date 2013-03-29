@@ -1,3 +1,13 @@
+loghogd (0.10) quantal; urgency=high
+
+  * Critical bug fix: handling malformed client data and buffer underrun error.
+  * Added a compress_on_write option which enables writing compressed logs
+    directly.
+  * Made file rotation respect both a schedule and size based reason to 
+    rotate the files.
+
+ -- Igor Partola <igor@activefrequency.com>  Fri, 29 Mar 2013 18:28:57 -0400
+
 loghogd (0.9) quantal; urgency=high
 
   * Bug fix: init script did not trigger proper facilities.conf reload

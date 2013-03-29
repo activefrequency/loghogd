@@ -1,5 +1,5 @@
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 import os, datetime, time, logging, errno
 
 from scheduler import Scheduler
@@ -10,14 +10,14 @@ class LogFile(object):
     This class is able to write to the corresponding log file and rotate it.
     '''
 
-    def __init__(self, filename, scheduler, compressed_extension, backup_count, max_size, rotate, flush_every):
+    def __init__(self, filename, scheduler, compressor, backup_count, max_size, rotate, flush_every):
         '''Initializes and opens a LogFile instance.'''
         
         self.log = logging.getLogger('writer.log_file') # internal logger
 
         self.filename = filename
         self.scheduler = scheduler
-        self.compressed_extension = compressed_extension
+        self.compressor = compressor
         self.backup_count = backup_count
         self.max_size = max_size
         self.rotate = rotate
@@ -44,12 +44,14 @@ class LogFile(object):
             
             # File does not exist
             self.scheduler.record_execution(self.filename, time.time())
-            self.file = os.fdopen(fd, 'a', 0o644)
+            f = os.fdopen(fd, 'ab', 0o644)
         except OSError as e:
             if e.errno == errno.EEXIST: # File exists
-                self.file = open(self.filename, 'a', 0o644)
+                f = open(self.filename, 'ab', 0o644)
             else:
                 raise
+
+        self.file = self.compressor.wrap_fileobj(f, os.path.basename(self.filename))
 
         self.size = os.stat(self.filename).st_size
 
@@ -63,44 +65,52 @@ class LogFile(object):
         
         self.file.write(data)
         self.dirty_writes += 1
-        self.size += len(data)
         
         if self.dirty_writes >= self.flush_every:
             self.file.flush()
             self.dirty_writes = 0
 
+            # Optimization: only check file size when flushing
+            self.size = os.stat(self.filename).st_size
+
     def should_rotate(self):
         '''Figures out if the given file should be rotated.
 
         :param f: file dict, as generated in Writer.open()
-        :return: bool
+        :return: None or str with reason for rotation
         '''
 
-        if self.rotate == 'size':
-            return self.size >= self.max_size
+        if self.max_size:
+            if self.size >= self.max_size:
+                return 'max_size'
 
         now = time.time()
         
         next_rotation_at = self.scheduler.get_next_execution(self.filename, self.rotate, now)
 
-        return next_rotation_at < now
+        if next_rotation_at < now:
+            return self.rotate
 
     def do_rotate(self):
         '''Performs the file rotation.'''
 
-        self.log.info('Rotating {0} based on "{1}"'.format(self.filename, self.rotate))
+        reason = self.should_rotate()
+        if not reason:
+            return
+
+        self.log.info('Rotating {0} based on "{1}"'.format(self.filename, reason))
         
         try:
             # Close the file before renaming it
             self.close()
 
             last_rotation_dt = datetime.datetime.fromtimestamp(self.scheduler.get_last_execution(self.filename))
-            new_name = '{0}.{1}'.format(self.filename, last_rotation_dt.strftime('%Y-%m-%d-%H-%M-%S-%f'))
-            self._rename(self.filename, new_name)
+            new_name = '{0}.{1}'.format(self.compressor.unwrap_filename(self.filename), last_rotation_dt.strftime('%Y-%m-%d-%H-%M-%S-%f'))
+            self._rename(self.filename, self.compressor.wrap_filename(new_name))
 
             self.remove_old_backups()
 
-            return new_name
+            self.compressor.compress(new_name)
         finally:
             # Make sure that no matter what we try to open the file
             self.open()
@@ -143,7 +153,7 @@ class Writer(object):
     the appropriate LogFile instances.
     '''
 
-    LOG_LINE_PROTO = '{0!s} - {1!s} - {2!s}\n'.decode('utf-8')
+    LOG_LINE_PROTO = '{0!s} - {1!s} - {2!s}\n'
 
     def __init__(self, facility_db, compressor, log_dir):
         '''Initializes a Writer instance.
@@ -168,9 +178,7 @@ class Writer(object):
 
         log_file = self.get_file(msg['hostname'], facility)
 
-        if log_file.should_rotate():
-            rotated_filename = log_file.do_rotate()
-            self.compressor.compress(rotated_filename)
+        log_file.do_rotate()
             
         s = self.LOG_LINE_PROTO.format(datetime.datetime.now(), msg['hostname'], msg['body']).encode('utf8')
 
@@ -180,9 +188,11 @@ class Writer(object):
         '''Returns the log filename given a hostname.'''
 
         if facility.file_per_host:
-            return os.path.join(self.log_dir, facility.app_id, '{0}-{1}.log'.format(hostname, facility.mod_str))
+            filename = os.path.join(self.log_dir, facility.app_id, '{0}-{1}.log'.format(hostname, facility.mod_str))
         else:
-            return os.path.join(self.log_dir, facility.app_id, '{0}.log'.format(facility.mod_str))
+            filename = os.path.join(self.log_dir, facility.app_id, '{0}.log'.format(facility.mod_str))
+
+        return self.compressor.wrap_filename(filename)
 
     def get_file(self, hostname, facility):
         '''Returns a LogFile instance that should be used.
@@ -198,7 +208,7 @@ class Writer(object):
             self.files[filename] = LogFile(
                 filename=filename,
                 scheduler=self.scheduler,
-                compressed_extension=self.compressor.extension,
+                compressor=self.compressor,
                 backup_count=facility.backup_count,
                 max_size=facility.max_size,
                 rotate=facility.rotate,
