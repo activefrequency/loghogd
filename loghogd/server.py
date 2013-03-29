@@ -204,8 +204,13 @@ class Server(object):
                     if data:
                         self.stream_buffers[sock].append(data)
                     
-                    for msg in self.parse_stream_buffer(sock):
-                        self.callback(msg, self.client_socket_addrs[sock])
+                    try:
+                        for msg in self.parse_stream_buffer(sock):
+                            self.callback(msg, self.client_socket_addrs[sock])
+                    except Exception as e:
+                        self.disconnect_client_stream(sock)
+                        self.log.error('Malformed client data. Disconnecting and flushing buffers.')
+                        self.log.exception(e)
 
                     if not data:
                         self.disconnect_client_stream(sock)
@@ -293,7 +298,7 @@ class Server(object):
 
             return payload, buf
         else:
-            return None, None
+            return None, buf
 
     def close(self):
         for sock in self.client_stream_socks:
