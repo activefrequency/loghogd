@@ -1,3 +1,10 @@
+loghogd (0.11) quantal; urgency=high
+
+  * Using 2048 bit SSL certificates
+  * Bug fix: loghog-client-cert now generate long-lived SSL certificates
+
+ -- Igor Partola <igor@activefrequency.com>  Mon, 17 Mar 2014 12:07:15 -0400
+
 loghogd (0.10) quantal; urgency=high
 
   * Critical bug fix: handling malformed client data and buffer underrun error.

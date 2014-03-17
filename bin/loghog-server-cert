@@ -25,11 +25,11 @@ ca_key="$domain-ca.key"
 ca_cert="$domain-ca.cert"
 
 # Generate a self-signed Certificate Authority
-openssl genrsa -out "$ca_key" 1024
+openssl genrsa -out "$ca_key" 2048
 openssl req -subj "/CN=ca.$domain" -new -x509 -days 365000 -extensions v3_ca -key "$ca_key" -out "$ca_cert"
 
 # Generate a server key and signed it with the CA
-openssl genrsa -out "$server_key" 1024
+openssl genrsa -out "$server_key" 2048
 openssl req -subj "/CN=server.$domain" -new -extensions v3_ca -key "$server_key" -out "$server_req"
 openssl x509 -req -in "$server_req" -days 365000 -CA "$ca_cert" -CAkey "$ca_key" -CAcreateserial -out "$server_cert"
 
