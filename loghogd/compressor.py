@@ -1,4 +1,5 @@
 
+from __future__ import with_statement, print_function
 import threading, logging, os, errno, re, gzip
 from subprocess import Popen, PIPE
 from collections import deque
@@ -158,7 +159,7 @@ class Compressor(object):
 
         missing_compressors = set()
         for exe in tuple(self.COMPRESS_LIBS):
-            if not self.check_exec_exists([exe, '--version']):
+            if not self.check_exec_exists(['which', exe]):
                 missing_compressors.add(exe)
 
         if self.compress_cmd in missing_compressors and FALLBACK_COMPRESSOR not in missing_compressors:
@@ -171,9 +172,9 @@ class Compressor(object):
         '''Checks whether a given executable exists in the $PATH.'''
 
         try:
-            devnull = open(os.devnull, 'wb')
-            self.call(exe, stdout=devnull, stderr=devnull)
-            return True
+            with open(os.devnull, 'wb') as devnull:
+                ret, _, _ = self.call(exe, stdout=devnull, stderr=devnull)
+            return (ret == 0)
         except OSError as e:
             if e.errno == errno.ENOENT:
                 return False
