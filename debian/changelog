@@ -1,3 +1,11 @@
+loghogd (0.12) quantal; urgency=high
+
+  * Bug fix: not dying when a client sends bad TLS-encrypted data.
+  * Changing how we discover compressors to be more cross-platform.
+  * Adding a non-expired example client cert.
+
+ -- Igor Partola <igor@activefrequency.com>  Mon, 17 Mar 2014 12:07:15 -0400
+
 loghogd (0.11) quantal; urgency=high
 
   * Using 2048 bit SSL certificates

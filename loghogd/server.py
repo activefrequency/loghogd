@@ -200,7 +200,14 @@ class Server(object):
 
                 elif sock in self.client_stream_socks:
                     # Read client data
-                    data = sock.read(self.BUFSIZE) if isinstance(sock, ssl.SSLSocket) else sock.recv(self.BUFSIZE)
+                    try:
+                        data = sock.read(self.BUFSIZE) if isinstance(sock, ssl.SSLSocket) else sock.recv(self.BUFSIZE)
+                    except Exception as e:
+                        self.log.error('An error occured reading data from client at {0}'.format(self.client_socket_addrs[sock]))
+                        self.log.exception(e)
+                        self.disconnect_client_stream(sock)
+                        continue
+
                     if data:
                         self.stream_buffers[sock].append(data)
                     
@@ -208,9 +215,9 @@ class Server(object):
                         for msg in self.parse_stream_buffer(sock):
                             self.callback(msg, self.client_socket_addrs[sock])
                     except Exception as e:
-                        self.disconnect_client_stream(sock)
-                        self.log.error('Malformed client data. Disconnecting and flushing buffers.')
+                        self.log.error('Malformed client data from {0}. Disconnecting and flushing buffers.'.format(self.client_socket_addrs[sock]))
                         self.log.exception(e)
+                        self.disconnect_client_stream(sock)
 
                     if not data:
                         self.disconnect_client_stream(sock)
