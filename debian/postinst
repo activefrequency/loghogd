@@ -21,8 +21,6 @@ LOGHOG_USER='loghog'
 
 case "$1" in
     configure)
-        update-python-modules -p loghogd.public
-
         # Copy in the sample facilities file if it does not exist
         if [ ! -e /etc/loghogd/facilities.conf ]; then
             cp /usr/share/doc/loghogd/examples/facilities.conf /etc/loghogd/

@@ -1,4 +1,10 @@
-loghogd (0.12) quantal; urgency=high
+loghogd (0.13) xenial; urgency=high
+
+  * Compatibility with Ubuntu 16.04
+
+ -- Igor Partola <igor@activefrequency.com>  Tue, 31 May 2016 18:59:28 -0400
+
+loghogd (0.12) xenial; urgency=high
 
   * Bug fix: not dying when a client sends bad TLS-encrypted data.
   * Changing how we discover compressors to be more cross-platform.
@@ -6,14 +12,14 @@ loghogd (0.12) quantal; urgency=high
 
  -- Igor Partola <igor@activefrequency.com>  Mon, 17 Mar 2014 12:07:15 -0400
 
-loghogd (0.11) quantal; urgency=high
+loghogd (0.11) xenial; urgency=high
 
   * Using 2048 bit SSL certificates
   * Bug fix: loghog-client-cert now generate long-lived SSL certificates
 
  -- Igor Partola <igor@activefrequency.com>  Mon, 17 Mar 2014 12:07:15 -0400
 
-loghogd (0.10) quantal; urgency=high
+loghogd (0.10) xenial; urgency=high
 
   * Critical bug fix: handling malformed client data and buffer underrun error.
   * Added a compress_on_write option which enables writing compressed logs
@@ -23,7 +29,7 @@ loghogd (0.10) quantal; urgency=high
 
  -- Igor Partola <igor@activefrequency.com>  Fri, 29 Mar 2013 18:28:57 -0400
 
-loghogd (0.9) quantal; urgency=high
+loghogd (0.9) xenial; urgency=high
 
   * Bug fix: init script did not trigger proper facilities.conf reload
   * Updated sample config file with more sane defaults
@@ -31,7 +37,7 @@ loghogd (0.9) quantal; urgency=high
 
  -- Igor Partola <igor@activefrequency.com>  Tue, 26 Mar 2013 15:42:11 -0400
 
-loghogd (0.8) quantal; urgency=high
+loghogd (0.8) xenial; urgency=high
 
   * Critical bug fix: preventing getting stuck on select() forever at
   shutdown.
@@ -44,7 +50,7 @@ loghogd (0.7) lucid; urgency=high
 
  -- Igor Partola <igor@activefrequency.com>  Fri, 01 Feb 2013 15:36:32 -0500
 
-loghogd (0.6) quantal; urgency=low
+loghogd (0.6) xenial; urgency=low
 
   * Repackaged for Precise.
 
